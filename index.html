@@ -190,9 +190,11 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .agree input{width:26px;height:26px;flex:none;margin-top:1px;accent-color:var(--accent)}
 .note{border-left:4px solid var(--warn);background:var(--warn-soft);padding:10px 12px;border-radius:6px;font-size:15px}
 .foot{color:var(--muted);font-size:13px;text-align:center;padding-top:8px}
-.home-hero{position:relative;display:flex;flex-direction:column;gap:6px;padding:8px 96px 8px 0;min-height:110px}
-.home-hero .drop{position:absolute;right:6px;top:4px;width:66px;height:auto}
-.home-hero h2{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1;letter-spacing:.05em;margin:0;color:var(--accent-text)}
+.home-hero{position:relative;display:flex;flex-direction:column;gap:6px;padding:4px 64px 4px 0;min-height:72px;justify-content:center}
+.home-hero .drop{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:48px;height:auto}
+.home-hero h2{font-family:var(--f-display);font-weight:400;font-size:clamp(24px,8vw,34px);line-height:1.05;letter-spacing:.04em;margin:0;color:var(--accent-text);white-space:nowrap}
+.linkbtn{border:0;background:none;padding:6px 2px;min-height:36px;color:var(--accent-text);font-weight:600;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.dirtools{gap:10px}
 .home-hero .brandlogo{max-height:56px;max-width:220px;width:auto;align-self:flex-start;margin-bottom:6px}
 .home-hero p{margin:0;color:var(--muted)}
 .center{text-align:center}
@@ -403,22 +405,17 @@ function back(){const v=view;if(v.name==="layer"||v.name==="pit")go(v.name==="la
 function render(){if(!termsAccepted()&&view.name!=="termsgate"){view={name:"termsgate"}}stopTimerIfLeaving();if(MAP&&view.name!=="home"){MAP.remove();MAP=null}const r=VIEWS[view.name]||VIEWS.home;$("#app").innerHTML=r();refreshCalcs();if(view.name==="home")renderDir();if(view.name==="photos")fillThumbs()}
 
 const VIEWS={
-home(){setBar(S.settings.company||"Site & Soil Field Log","",false,`<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button>`);
+home(){setBar(S.settings.company||"My sites","",false,`<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button>`);
   setActions(`<button class="btn primary" data-act="newsite">${IC.plus} New site investigation</button>`);
   const own=S.sites.filter(x=>!x.example).length;const ex=S.sites.length-own;
-  return`<section class="home-hero">${DROP_SVG}${S.settings.logo?`<img class="brandlogo" src="${S.settings.logo}" alt="${esc(S.settings.company||"Company logo")}">`:""}<h2>Site &amp; Soil Field Log</h2><span class="eyebrow">BC SPM v3 · Site &amp; soil evaluation</span>${S.sites.length<2?`<p>Record test pits, permeability, percolation and setbacks on site. Send the finished log as an Excel, Word or PDF file.</p>`:""}</section>
-  ${!S.settings.company&&!S.settings.name?`<div class="note">Add your name and company in <button class="btn sm ghost" data-act="settings" style="min-height:32px;padding:0 6px;border:0;text-decoration:underline">Settings</button> so they appear on exported reports.</div>`:""}
+  return`<section class="home-hero">${DROP_SVG}${S.settings.logo?`<img class="brandlogo" src="${S.settings.logo}" alt="${esc(S.settings.company||"Company logo")}">`:""}<h2>Site &amp; Soil Field Log</h2><span class="eyebrow">For BC SPM v3 evaluations</span>${S.sites.length<2?`<p>Record test pits, permeability, percolation and setbacks on site. Send the finished log as an Excel, Word or PDF file.</p>`:""}</section>
+  ${!S.settings.company&&!S.settings.name&&!S.settings.logo?`<div class="note">Add your name and company logo in <button class="btn sm ghost" data-act="settings" style="min-height:32px;padding:0 6px;border:0;text-decoration:underline">Settings</button></div>`:""}
   <div class="dirbar">
-    <div class="searchrow"><input type="search" id="dirq" placeholder="Search address, client, PID, file no." value="${esc(DIR.q)}" aria-label="Search sites" autocomplete="off">
+    <div class="searchrow"><input type="search" id="dirq" placeholder="Search address, client, file no." value="${esc(DIR.q)}" aria-label="Search sites" autocomplete="off">
       <div class="seg" role="group" aria-label="View"><button data-act="dirmode" data-val="list" aria-pressed="${DIR.mode==="list"}">List</button><button data-act="dirmode" data-val="map" aria-pressed="${DIR.mode==="map"}">Map</button></div></div>
-    <div class="row" style="align-items:center">
-      <div class="chips" role="group" aria-label="Status filter" id="dirstat" style="flex:2 1 260px"></div>
-      ${DIR.mode==="list"?`<div class="field" style="flex:1 1 150px"><select id="dirsort" aria-label="Sort sites">${[["recent","Recently edited"],["date","Investigation date"],["address","Address A–Z"],["client","Client A–Z"]].map(([v,l])=>`<option value="${v}"${DIR.sort===v?" selected":""}>${l}</option>`).join("")}</select></div>`:""}
-    </div>
   </div>
   <div id="dirlist"></div>
-  ${ex?`<button class="btn ghost sm" data-act="delexamples" style="align-self:center">Remove ${ex} example site${ex===1?"":"s"}</button>`:""}
-  <p class="foot">Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>Data is saved on this device only. Export each site to keep a copy.</p>`},
+  `},
 
 site(){const s=cur();if(!s)return VIEWS.home();const sum=siteSummary(s);
   setBar(s.prop.address||"Untitled site",s.prop.date,true);
@@ -631,7 +628,8 @@ settings(){setBar("Settings","Shown on exported reports",true);setActions(`<butt
     <p class="hint">Your logo and company name appear at the top of every Excel, Word and PDF export.</p></div>
   <div class="card"><h2>Display</h2><div class="chips" role="group" aria-label="Theme">${[["","Match phone"],["light","Light"],["dark","Dark"]].map(([v,t])=>`<button class="chip" data-act="theme" data-val="${v}" aria-pressed="${(st.theme||"")===v}">${t}</button>`).join("")}</div></div>
   <button class="navitem" style="border:1px solid var(--line);border-radius:var(--r);background:var(--surface)" data-act="showterms"><div class="t"><b>Terms of Use</b><span>${termsAccepted()?"Agreed "+esc(S.settings.terms.at)+" · version "+TERMS_VERSION:"Not yet agreed"}</span></div>${IC.chev}</button>
-  <p class="foot">Site &amp; Soil Field Log · version 0.5 (2026-11-11)<br>All data stays on this device until you export it.</p>`}
+  ${S.sites.some(x=>x.example)?`<div class="card"><h2>Example sites</h2><p class="hint">${S.sites.filter(x=>x.example).length} example sites show how a finished log looks. Remove them when you no longer need them. Your own sites stay.</p><button class="btn" data-act="delexamples">Remove example sites</button></div>`:""}
+  <p class="foot">Site &amp; Soil Field Log · version 0.6 (2026-11-11)<br>Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>All data stays on this device until you export it.</p>`}
 };
 
 
@@ -682,6 +680,7 @@ document.addEventListener("input",e=>{const t=e.target;
 document.addEventListener("change",e=>{const t=e.target;
   if(t.id==="tc1"||t.id==="tc2"){const b=$("#termsyes");if(b)b.disabled=!($("#tc1").checked&&$("#tc2").checked);return}
   if(t.id==="dirsort"){DIR.sort=t.value;renderDir();return}
+  if(t.id==="dirshow"){DIR.status=t.value;DIR.limit=0;renderDir();return}
   if(t.tagName==="SELECT"&&t.dataset.bind){const path=t.dataset.bind;const oi=t.parentElement.querySelector(".other-in");
     if(t.value==="__other"){OTHER.add(path);setPath(path,"");if(oi){oi.value="";oi.hidden=false;oi.focus()}}
     else{OTHER.delete(path);setPath(path,t.value);if(oi){oi.value="";oi.hidden=true}}refreshCalcs()}
@@ -728,7 +727,7 @@ document.addEventListener("click",e=>{const chip=e.target.closest("[data-chip]")
    showterms:()=>go({name:"terms"}),
    status:()=>{s.status=a.dataset.val;save();render()},
    dirmode:()=>{DIR.mode=a.dataset.val;try{localStorage.setItem("ssfl_dirmode",DIR.mode)}catch(e){}render()},
-   dirstatus:()=>{DIR.status=a.dataset.val;renderDir()},
+   dirtools:()=>{DIR.tools=!DIR.tools;renderDir()},
    kml:exportKml,
    nearme:mapNearMe,
    delexamples:()=>confirmSheet("Remove the example sites?","Only sites marked Example are removed. Your own sites stay.","Remove examples",()=>{S.sites.filter(x=>x.example).forEach(x=>store.del("site:"+x.id));S.sites=S.sites.filter(x=>!x.example);render();toast("Examples removed")}),
@@ -808,21 +807,23 @@ function siteRow(s){const sum=siteSummary(s);const st=s.status||"In progress";
   return`<button class="navitem" data-act="open" data-id="${s.id}"><div class="t"><b>${esc(s.prop.address||"Untitled site")}</b><span>${esc(sub)}</span></div>${s.example?'<span class="pill ex">Example</span>':st==="Sent"?'<span class="pill sent">Sent</span>':st==="Complete"?'<span class="pill ok">Complete</span>':""}${IC.chev}</button>`}
 function renderDir(){const box=$("#dirlist");if(!box)return;const L=dirFiltered();const total=S.sites.length;
   const counts={All:total};STATUSES.forEach(x=>counts[x]=S.sites.filter(s=>(s.status||"In progress")===x).length);
-  $("#dirstat").innerHTML=["All",...STATUSES].map(x=>`<button class="chip" data-act="dirstatus" data-val="${x}" aria-pressed="${DIR.status===x}">${x} <span class="unit">${counts[x]}</span></button>`).join("");
-  const countTxt=L.length===total?`${total} site${total===1?"":"s"}`:`${L.length} of ${total} sites match`;
+  const countTxt=(L.length===total?`${total} site${total===1?"":"s"}`:`${L.length} of ${total} sites`)+(DIR.status!=="All"?` · ${DIR.status.toLowerCase()} only`:"");
+  const SORTS=[["recent","Recently edited"],["date","Investigation date"],["address","Address A–Z"],["client","Client A–Z"]];
+  const tools=`<div class="dircount"><span>${countTxt}</span>${total>1?`<button class="linkbtn" data-act="dirtools" aria-expanded="${!!DIR.tools}">${DIR.tools?"Done":"Sort &amp; filter"}</button>`:""}</div>
+    ${DIR.tools?`<div class="row dirtools"><div class="field" style="flex:1 1 140px"><label for="dirshow">Show</label><select id="dirshow">${["All",...STATUSES].map(x=>`<option value="${x}"${DIR.status===x?" selected":""}>${x==="All"?"All sites":x} (${counts[x]})</option>`).join("")}</select></div>${DIR.mode==="list"?`<div class="field" style="flex:1 1 140px"><label for="dirsort">Sort by</label><select id="dirsort">${SORTS.map(([v,l])=>`<option value="${v}"${DIR.sort===v?" selected":""}>${l}</option>`).join("")}</select></div>`:""}</div>`:""}`;
   if(DIR.mode==="map"){const noGps=L.filter(s=>!isFinite(num(s.prop.lat))||!isFinite(num(s.prop.lon))).length;
     if(MAP){MAP.remove();MAP=null}
-    box.innerHTML=`<div class="dircount"><span>${countTxt}${noGps?` · ${noGps} without a GPS point`:""}</span></div><div class="row" style="gap:8px"><button class="btn sm" data-act="nearme">${IC.pin} Near me</button><button class="btn sm" data-act="kml">Google Earth file (.kml)</button></div>
+    box.innerHTML=`${tools}${noGps?`<p class="hint" style="margin:0">${noGps} without a GPS point</p>`:""}<div class="row" style="gap:8px"><button class="btn sm" data-act="nearme">${IC.pin} Near me</button><button class="btn sm" data-act="kml">Google Earth file (.kml)</button></div>
       <div id="map" role="region" aria-label="Map of sites"></div><p class="hint" id="mapnote" aria-live="polite"></p>`;
     drawMap(L);return}
   if(MAP){MAP.remove();MAP=null}
-  if(!L.length){box.innerHTML=`<div class="dircount"><span>${countTxt}</span></div><div class="card center"><h2>${total?"No matches":"No sites yet"}</h2><p class="hint">${total?"Try fewer words, or clear the search and status filter.":"Tap “New site investigation” to start your first field log."}</p></div>`;return}
+  if(!L.length){box.innerHTML=`${tools}<div class="card center"><h2>${total?"No matches":"No sites yet"}</h2><p class="hint">${total?"Try fewer words, or set Sort & filter back to All sites.":"Tap “New site investigation” to start your first field log."}</p></div>`;return}
   let html="",yr=null;const group=DIR.sort==="date"||DIR.sort==="recent";const shown=L.slice(0,DIR.limit||150);
   const chunks=[];let curChunk=[];
   shown.forEach(s=>{const y=group?(DIR.sort==="date"?(s.prop.date||"").slice(0,4)||"No date":new Date(s.updated).getFullYear()+""):null;
     if(group&&y!==yr){if(curChunk.length)chunks.push([yr,curChunk]);curChunk=[];yr=y}curChunk.push(s)});if(curChunk.length)chunks.push([yr,curChunk]);
   html=chunks.map(([y,c])=>`${group&&chunks.length>1?`<div class="yearhd">${esc(y)}</div>`:""}<div class="navlist">${c.map(siteRow).join("")}</div>`).join("");
-  box.innerHTML=`<div class="dircount"><span>${countTxt}</span></div><div style="display:flex;flex-direction:column;gap:12px">${html}</div>${L.length>shown.length?`<button class="btn block" id="dirmore">Show ${Math.min(150,L.length-shown.length)} more</button>`:""}`;
+  box.innerHTML=`${tools}<div style="display:flex;flex-direction:column;gap:12px">${html}</div>${L.length>shown.length?`<button class="btn block" id="dirmore">Show ${Math.min(150,L.length-shown.length)} more</button>`:""}`;
   const more=$("#dirmore");if(more)more.onclick=()=>{DIR.limit=(DIR.limit||150)+150;renderDir()}}
 function drawMap(L){const note=$("#mapnote");if(!window.L){note.textContent="The map tool didn't load. Connect to the internet and reopen this screen.";return}
   const css=getComputedStyle(document.documentElement);const col=css.getPropertyValue("--b1").trim()||"#4B85C4";
