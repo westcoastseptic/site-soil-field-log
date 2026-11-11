@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Site &amp; Soil Field Log</title>
+<meta name="description" content="Record a site and soil evaluation in the field and export it to Excel, Word or PDF.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#508EB9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Site &amp; Soil">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{color-scheme:light dark}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bayon&family=Open+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column field clipboard. West Coast Septic brand: Blue 2 bar, Bayon titles, Open Sans body, low-poly water drop on white. */
+:root{
+  --bg:#F2F7F9; --surface:#FFFFFF; --sunk:#F6FAFB; --ink:#1D2A33; --muted:#5A6B77; --line:#D3E3EA;
+  --accent:#508EB9; --accent-text:#3A7099; --accent-soft:#E2EFF5; --accent-ink:#FFFFFF;
+  --b1:#4B85C4; --b2:#508EB9; --b3:#5FA9CF; --b4:#72ACC9; --b5:#9ACFD5; --b6:#C1E1EA;
+  --ok:#2B7A4B; --ok-soft:#DFF1E6; --bad:#B0281F; --bad-soft:#F8E1DE; --warn:#8E6200; --warn-soft:#F6ECD3;
+  --water:#4B85C4;
+  --f-display:"Bayon","Oswald","Arial Narrow",Impact,sans-serif;
+  --f-body:"Open Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"Open Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px; --drop-op:.5; --bar:#508EB9; --bar-ink:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D171E; --surface:#14222C; --sunk:#101C25; --ink:#E2EDF2; --muted:#93A9B6; --line:#243747;
+  --accent:#72ACC9; --accent-text:#9ACFD5; --accent-soft:#183243; --accent-ink:#0A1620;
+  --ok:#6FCF97; --ok-soft:#173826; --bad:#F2877D; --bad-soft:#3E1C19; --warn:#E3B54E; --warn-soft:#3A2E12;
+  --water:#9ACFD5; --drop-op:0; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0D171E; --surface:#14222C; --sunk:#101C25; --ink:#E2EDF2; --muted:#93A9B6; --line:#243747;
+  --accent:#72ACC9; --accent-text:#9ACFD5; --accent-soft:#183243; --accent-ink:#0A1620;
+  --ok:#6FCF97; --ok-soft:#173826; --bad:#F2877D; --bad-soft:#3E1C19; --warn:#E3B54E; --warn-soft:#3A2E12;
+  --water:#9ACFD5; --drop-op:0; color-scheme:dark }
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);color:var(--bar-ink)}
+.bar .wrap{display:flex;align-items:center;gap:8px;min-height:58px;padding-block:6px}
+.bar h1{font-family:var(--f-display);font-weight:400;font-size:25px;letter-spacing:.05em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-wrap:balance}
+.bar .sub{display:block;font-family:var(--f-body);font-weight:500;font-size:13px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:inherit;flex:none}
+.iconbtn:active{background:rgba(255,255,255,.18)}
+.iconbtn svg{width:24px;height:24px}
+
+main.wrap{padding-block:16px 120px;display:flex;flex-direction:column;gap:16px}
+
+/* Generic blocks */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px}
+.card h2{font-family:var(--f-display);font-size:23px;font-weight:400;margin:0;letter-spacing:.05em;color:var(--accent-text);text-wrap:balance}
+.card h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0;font-weight:600}
+.hint{color:var(--muted);font-size:15px;margin:0}
+.eyebrow{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1 1 140px;min-width:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* Fields */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field>.lbl{font-weight:600;font-size:15px}
+.field .unit{font-weight:400;color:var(--muted)}
+input[type=text],input[type=search],input[type=tel],input[type=email],input[type=date],input[type=number],input:not([type]),select,textarea{
+  width:100%;min-height:50px;border:1.5px solid var(--line);border-radius:8px;background:var(--sunk);padding:10px 12px;font-size:17px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:var(--surface);outline:none}
+textarea{min-height:96px;resize:vertical}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:8px 14px;border-radius:22px;border:1.5px solid var(--line);background:var(--sunk);font-size:16px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.chip .sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px;border:1px solid rgba(0,0,0,.25)}
+
+.other-in{margin-top:2px}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:10px 18px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:18px;text-align:center}
+.btn svg{width:20px;height:20px;flex:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.block{width:100%}
+.btn.sm{min-height:44px;padding:6px 14px;font-size:15px}
+.btn:disabled{opacity:.5}
+
+/* Lists of navigable things */
+.navlist{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.navitem{display:flex;align-items:center;gap:14px;padding:14px 16px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;width:100%;min-height:68px}
+.navitem:first-child{border-top:0}
+.navitem:active{background:var(--sunk)}
+.navitem .t{flex:1;min-width:0}
+.navitem .t b{display:block;font-size:18px;font-weight:600}
+.navitem .t span{display:block;color:var(--muted);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.navitem .chev{width:20px;height:20px;color:var(--muted);flex:none}
+.step{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:14px;font-weight:500;border:1.5px solid var(--line);color:var(--muted)}
+.step.done{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.step.part{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.step svg{width:18px;height:18px}
+
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;font-size:14px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.na{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.pill.ex{background:var(--warn-soft);color:var(--warn)}
+
+/* Summary figures */
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.fig{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fig .k{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.fig .v{font-family:var(--f-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
+.fig .v small{font-size:14px;color:var(--muted);font-family:var(--f-body)}
+
+/* Soil profile strip */
+.pitwrap{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:start}
+.profile{position:relative;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;background:repeating-linear-gradient(135deg,var(--sunk) 0 6px,var(--line) 6px 7px)}
+.profile .lyr{position:absolute;left:0;right:0;border-top:1px solid rgba(0,0,0,.35);font-family:var(--f-mono);font-size:11px;padding:2px 4px;color:#111;overflow:hidden}
+.profile .lyr.dk{color:#F3F3F3}
+.profile .mark{position:absolute;left:-2px;right:-2px;height:0;border-top:2.5px dashed var(--water)}
+.profile .mark.rl{border-top:2.5px solid var(--bad)}
+.ticks{position:relative;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.legend{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:22px;vertical-align:middle;margin-right:6px}
+@media (max-width:420px){.pitwrap{grid-template-columns:80px 1fr}}
+
+/* Layer cards */
+.layer{border:1.5px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--sunk)}
+.layer-head{display:flex;align-items:center;gap:10px}
+.layer-head .swatch{width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.3);flex:none}
+.layer-head b{flex:1;font-family:var(--f-mono);font-weight:500;font-size:16px}
+
+/* Permeability readings */
+.readings{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.readings th{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:6px 4px;font-weight:600}
+.readings td{padding:4px;border-top:1px solid var(--line);vertical-align:middle}
+.readings td.min{font-family:var(--f-mono);width:56px;color:var(--muted)}
+.readings td.rate{font-family:var(--f-mono);width:92px;text-align:right}
+.readings td.use{width:56px;text-align:right}
+.readings tr.excl td.rate{text-decoration:line-through;color:var(--muted)}
+.readings input{min-height:46px}
+.tog{min-width:46px;min-height:40px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);font-size:13px;font-weight:600}
+.tog[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+.timer{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--accent-soft)}
+.timer .clock{font-family:var(--f-mono);font-size:28px;font-weight:500;flex:1}
+
+/* Setbacks */
+.sb{display:grid;grid-template-columns:1fr 104px 68px;gap:8px 10px;align-items:center}
+.sb .name{font-size:16px;line-height:1.25;min-width:0}
+.sb .name small{display:block;color:var(--muted);font-family:var(--f-mono);font-size:13px}
+.sb input{min-height:46px;text-align:right}
+.sb .st{text-align:right}
+.sb .hdr{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.sb .hdr.r{text-align:right}
+
+/* Photos */
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.photo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.photo img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--line);max-width:100%}
+.photo input{min-height:44px;font-size:15px}
+
+/* Bottom action bar */
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.actions .wrap{display:flex;gap:10px;padding-block:10px 0}
+.actions .wrap>*{flex:1}
+
+/* Toast & sheet */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:22px;font-weight:600;font-size:15px;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet h2{font-family:var(--f-display);font-weight:400;letter-spacing:.05em;margin:0;font-size:24px}
+
+.terms-box{max-height:46vh;overflow:auto;border:1.5px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--sunk);font-size:14px;line-height:1.5}
+.terms-box h4{font-family:var(--f-body);font-size:15px;margin:14px 0 4px}
+.terms-box p{margin:0 0 8px}
+.terms-sum{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.agree{display:flex;gap:12px;align-items:flex-start;font-size:16px;line-height:1.35;cursor:pointer}
+.agree input{width:26px;height:26px;flex:none;margin-top:1px;accent-color:var(--accent)}
+.note{border-left:4px solid var(--warn);background:var(--warn-soft);padding:10px 12px;border-radius:6px;font-size:15px}
+.foot{color:var(--muted);font-size:13px;text-align:center;padding-top:8px}
+.home-hero{position:relative;display:flex;flex-direction:column;gap:6px;padding:8px 96px 8px 0;min-height:110px}
+.home-hero .drop{position:absolute;right:6px;top:4px;width:66px;height:auto}
+.home-hero h2{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1;letter-spacing:.05em;margin:0;color:var(--accent-text)}
+.home-hero .brandlogo{max-height:56px;max-width:220px;width:auto;align-self:flex-start;margin-bottom:6px}
+.home-hero p{margin:0;color:var(--muted)}
+.center{text-align:center}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{transform:translate(-50%,8px);opacity:.2}}}
+/* Leaflet 1.9.4 (BSD-2) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane > svg,.leaflet-pane > canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer {position: absolute;left: 0;top: 0;}.leaflet-container {overflow: hidden;}.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow {-webkit-user-select: none;-moz-user-select: none;user-select: none;-webkit-user-drag: none;}.leaflet-tile::selection {background: transparent;}.leaflet-safari .leaflet-tile {image-rendering: -webkit-optimize-contrast;}.leaflet-safari .leaflet-tile-container {width: 1600px;height: 1600px;-webkit-transform-origin: 0 0;}.leaflet-marker-icon,.leaflet-marker-shadow {display: block;}.leaflet-container .leaflet-overlay-pane svg {max-width: none !important;max-height: none !important;}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer,.leaflet-container .leaflet-tile {max-width: none !important;max-height: none !important;width: auto;padding: 0;}.leaflet-container img.leaflet-tile {mix-blend-mode: plus-lighter;}.leaflet-container.leaflet-touch-zoom {-ms-touch-action: pan-x pan-y;touch-action: pan-x pan-y;}.leaflet-container.leaflet-touch-drag {-ms-touch-action: pinch-zoom;touch-action: none;touch-action: pinch-zoom;}.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {-ms-touch-action: none;touch-action: none;}.leaflet-container {-webkit-tap-highlight-color: transparent;}.leaflet-container a {-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);}.leaflet-tile {filter: inherit;visibility: hidden;}.leaflet-tile-loaded {visibility: inherit;}.leaflet-zoom-box {width: 0;height: 0;-moz-box-sizing: border-box;box-sizing: border-box;z-index: 800;}.leaflet-overlay-pane svg {-moz-user-select: none;}.leaflet-pane         { z-index: 400; }.leaflet-tile-pane    { z-index: 200; }.leaflet-overlay-pane { z-index: 400; }.leaflet-shadow-pane  { z-index: 500; }.leaflet-marker-pane  { z-index: 600; }.leaflet-tooltip-pane   { z-index: 650; }.leaflet-popup-pane   { z-index: 700; }.leaflet-map-pane canvas { z-index: 100; }.leaflet-map-pane svg    { z-index: 200; }.leaflet-vml-shape {width: 1px;height: 1px;}.lvml {behavior: url(#default#VML);display: inline-block;position: absolute;}.leaflet-control {position: relative;z-index: 800;pointer-events: visiblePainted;pointer-events: auto;}.leaflet-top,.leaflet-bottom {position: absolute;z-index: 1000;pointer-events: none;}.leaflet-top {top: 0;}.leaflet-right {right: 0;}.leaflet-bottom {bottom: 0;}.leaflet-left {left: 0;}.leaflet-control {float: left;clear: both;}.leaflet-right .leaflet-control {float: right;}.leaflet-top .leaflet-control {margin-top: 10px;}.leaflet-bottom .leaflet-control {margin-bottom: 10px;}.leaflet-left .leaflet-control {margin-left: 10px;}.leaflet-right .leaflet-control {margin-right: 10px;}.leaflet-fade-anim .leaflet-popup {opacity: 0;-webkit-transition: opacity 0.2s linear;-moz-transition: opacity 0.2s linear;transition: opacity 0.2s linear;}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {opacity: 1;}.leaflet-zoom-animated {-webkit-transform-origin: 0 0;-ms-transform-origin: 0 0;transform-origin: 0 0;}svg.leaflet-zoom-animated {will-change: transform;}.leaflet-zoom-anim .leaflet-zoom-animated {-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);-moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);transition:         transform 0.25s cubic-bezier(0,0,0.25,1);}.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile {-webkit-transition: none;-moz-transition: none;transition: none;}.leaflet-zoom-anim .leaflet-zoom-hide {visibility: hidden;}.leaflet-interactive {cursor: pointer;}.leaflet-grab {cursor: -webkit-grab;cursor:    -moz-grab;cursor:         grab;}.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive {cursor: crosshair;}.leaflet-popup-pane,.leaflet-control {cursor: auto;}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive,.leaflet-dragging .leaflet-marker-draggable {cursor: move;cursor: -webkit-grabbing;cursor:    -moz-grabbing;cursor:         grabbing;}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-image-layer,.leaflet-pane > svg path,.leaflet-tile-container {pointer-events: none;}.leaflet-marker-icon.leaflet-interactive,.leaflet-image-layer.leaflet-interactive,.leaflet-pane > svg path.leaflet-interactive,svg.leaflet-image-layer.leaflet-interactive path {pointer-events: visiblePainted;pointer-events: auto;}.leaflet-container {background: #ddd;outline-offset: 1px;}.leaflet-container a {color: #0078A8;}.leaflet-zoom-box {border: 2px dotted #38f;background: rgba(255,255,255,0.5);}.leaflet-container {font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;font-size: 12px;font-size: 0.75rem;line-height: 1.5;}.leaflet-bar {box-shadow: 0 1px 5px rgba(0,0,0,0.65);border-radius: 4px;}.leaflet-bar a {background-color: #fff;border-bottom: 1px solid #ccc;width: 26px;height: 26px;line-height: 26px;display: block;text-align: center;text-decoration: none;color: black;}.leaflet-bar a,.leaflet-control-layers-toggle {background-position: 50% 50%;background-repeat: no-repeat;display: block;}.leaflet-bar a:hover,.leaflet-bar a:focus {background-color: #f4f4f4;}.leaflet-bar a:first-child {border-top-left-radius: 4px;border-top-right-radius: 4px;}.leaflet-bar a:last-child {border-bottom-left-radius: 4px;border-bottom-right-radius: 4px;border-bottom: none;}.leaflet-bar a.leaflet-disabled {cursor: default;background-color: #f4f4f4;color: #bbb;}.leaflet-touch .leaflet-bar a {width: 30px;height: 30px;line-height: 30px;}.leaflet-touch .leaflet-bar a:first-child {border-top-left-radius: 2px;border-top-right-radius: 2px;}.leaflet-touch .leaflet-bar a:last-child {border-bottom-left-radius: 2px;border-bottom-right-radius: 2px;}.leaflet-control-zoom-in,.leaflet-control-zoom-out {font: bold 18px 'Lucida Console', Monaco, monospace;text-indent: 1px;}.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {font-size: 22px;}.leaflet-control-layers {box-shadow: 0 1px 5px rgba(0,0,0,0.4);background: #fff;border-radius: 5px;}.leaflet-control-layers-toggle {background-image: url(images/layers.png);width: 36px;height: 36px;}.leaflet-retina .leaflet-control-layers-toggle {background-image: url(images/layers-2x.png);background-size: 26px 26px;}.leaflet-touch .leaflet-control-layers-toggle {width: 44px;height: 44px;}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle {display: none;}.leaflet-control-layers-expanded .leaflet-control-layers-list {display: block;position: relative;}.leaflet-control-layers-expanded {padding: 6px 10px 6px 6px;color: #333;background: #fff;}.leaflet-control-layers-scrollbar {overflow-y: scroll;overflow-x: hidden;padding-right: 5px;}.leaflet-control-layers-selector {margin-top: 2px;position: relative;top: 1px;}.leaflet-control-layers label {display: block;font-size: 13px;font-size: 1.08333em;}.leaflet-control-layers-separator {height: 0;border-top: 1px solid #ddd;margin: 5px -10px 5px -6px;}.leaflet-default-icon-path {background-image: url(images/marker-icon.png);}.leaflet-container .leaflet-control-attribution {background: #fff;background: rgba(255, 255, 255, 0.8);margin: 0;}.leaflet-control-attribution,.leaflet-control-scale-line {padding: 0 5px;color: #333;line-height: 1.4;}.leaflet-control-attribution a {text-decoration: none;}.leaflet-control-attribution a:hover,.leaflet-control-attribution a:focus {text-decoration: underline;}.leaflet-attribution-flag {display: inline !important;vertical-align: baseline !important;width: 1em;height: 0.6669em;}.leaflet-left .leaflet-control-scale {margin-left: 5px;}.leaflet-bottom .leaflet-control-scale {margin-bottom: 5px;}.leaflet-control-scale-line {border: 2px solid #777;border-top: none;line-height: 1.1;padding: 2px 5px 1px;white-space: nowrap;-moz-box-sizing: border-box;box-sizing: border-box;background: rgba(255, 255, 255, 0.8);text-shadow: 1px 1px #fff;}.leaflet-control-scale-line:not(:first-child) {border-top: 2px solid #777;border-bottom: none;margin-top: -2px;}.leaflet-control-scale-line:not(:first-child):not(:last-child) {border-bottom: 2px solid #777;}.leaflet-touch .leaflet-control-attribution,.leaflet-touch .leaflet-control-layers,.leaflet-touch .leaflet-bar {box-shadow: none;}.leaflet-touch .leaflet-control-layers,.leaflet-touch .leaflet-bar {border: 2px solid rgba(0,0,0,0.2);background-clip: padding-box;}.leaflet-popup {position: absolute;text-align: center;margin-bottom: 20px;}.leaflet-popup-content-wrapper {padding: 1px;text-align: left;border-radius: 12px;}.leaflet-popup-content {margin: 13px 24px 13px 20px;line-height: 1.3;font-size: 13px;font-size: 1.08333em;min-height: 1px;}.leaflet-popup-content p {margin: 17px 0;margin: 1.3em 0;}.leaflet-popup-tip-container {width: 40px;height: 20px;position: absolute;left: 50%;margin-top: -1px;margin-left: -20px;overflow: hidden;pointer-events: none;}.leaflet-popup-tip {width: 17px;height: 17px;padding: 1px;margin: -10px auto 0;pointer-events: auto;-webkit-transform: rotate(45deg);-moz-transform: rotate(45deg);-ms-transform: rotate(45deg);transform: rotate(45deg);}.leaflet-popup-content-wrapper,.leaflet-popup-tip {background: white;color: #333;box-shadow: 0 3px 14px rgba(0,0,0,0.4);}.leaflet-container a.leaflet-popup-close-button {position: absolute;top: 0;right: 0;border: none;text-align: center;width: 24px;height: 24px;font: 16px/24px Tahoma, Verdana, sans-serif;color: #757575;text-decoration: none;background: transparent;}.leaflet-container a.leaflet-popup-close-button:hover,.leaflet-container a.leaflet-popup-close-button:focus {color: #585858;}.leaflet-popup-scrolled {overflow: auto;}.leaflet-oldie .leaflet-popup-content-wrapper {-ms-zoom: 1;}.leaflet-oldie .leaflet-popup-tip {width: 24px;margin: 0 auto;-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);}.leaflet-oldie .leaflet-control-zoom,.leaflet-oldie .leaflet-control-layers,.leaflet-oldie .leaflet-popup-content-wrapper,.leaflet-oldie .leaflet-popup-tip {border: 1px solid #999;}.leaflet-div-icon {background: #fff;border: 1px solid #666;}.leaflet-tooltip {position: absolute;padding: 6px;background-color: #fff;border: 1px solid #fff;border-radius: 3px;color: #222;white-space: nowrap;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;pointer-events: none;box-shadow: 0 1px 3px rgba(0,0,0,0.4);}.leaflet-tooltip.leaflet-interactive {cursor: pointer;pointer-events: auto;}.leaflet-tooltip-top:before,.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before {position: absolute;pointer-events: none;border: 6px solid transparent;background: transparent;content: "";}.leaflet-tooltip-bottom {margin-top: 6px;}.leaflet-tooltip-top {margin-top: -6px;}.leaflet-tooltip-bottom:before,.leaflet-tooltip-top:before {left: 50%;margin-left: -6px;}.leaflet-tooltip-top:before {bottom: 0;margin-bottom: -12px;border-top-color: #fff;}.leaflet-tooltip-bottom:before {top: 0;margin-top: -12px;margin-left: -6px;border-bottom-color: #fff;}.leaflet-tooltip-left {margin-left: -6px;}.leaflet-tooltip-right {margin-left: 6px;}.leaflet-tooltip-left:before,.leaflet-tooltip-right:before {top: 50%;margin-top: -6px;}.leaflet-tooltip-left:before {right: 0;margin-right: -12px;border-left-color: #fff;}.leaflet-tooltip-right:before {left: 0;margin-left: -12px;border-right-color: #fff;}@media print {.leaflet-control {-webkit-print-color-adjust: exact;print-color-adjust: exact;}}
+.dirbar{display:flex;flex-direction:column;gap:10px}
+.searchrow{display:flex;gap:8px}
+.searchrow input{flex:1;min-width:0}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.seg button{min-height:48px;padding:0 14px;border:0;background:var(--surface);font-weight:600;font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.dircount{color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.yearhd{font-family:var(--f-display);font-size:20px;letter-spacing:.05em;color:var(--accent-text);margin:6px 2px -6px}
+#map{height:62vh;min-height:320px;border-radius:var(--r);border:1px solid var(--line);background:var(--sunk);z-index:0}
+.leaflet-popup-content{font-family:var(--f-body);font-size:14px;margin:12px 14px;min-width:180px}
+.leaflet-popup-content b{display:block;font-size:15px;margin-bottom:2px}
+.leaflet-popup-content .btn{margin-top:8px;width:100%;min-height:42px;font-size:15px}
+.leaflet-container{font-family:var(--f-body)}
+.pill.sent{background:var(--accent-soft);color:var(--accent-text)}
+</style>
+
+<header class="bar"><div class="wrap" id="bar"></div></header>
+<main class="wrap" id="app"></main>
+<div id="actions"></div>
+<div id="overlay"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   Reference lists (BC SPM v3, Table II-3 / II-4; BHC workbook T2)
+   ============================================================ */
+const TEXTURES=["Sand","Loamy sand","Sandy loam","Loam","Silt loam","Silt","Sandy clay loam","Clay loam","Silty clay loam","Sandy clay","Silty clay","Clay","Gravelly sand","Gravelly loamy sand","Gravelly sandy loam","Gravelly loam","Gravelly silt loam","Very gravelly sand","Very gravelly loam","Gravel","Organic / peat","Fill"];
+const GRADES=[["3","Strong"],["2","Moderate"],["1","Weak"],["0","Structureless"]];
+const TYPES=[["sg","sg – single grain"],["m","m – massive"],["gr","gr – granular"],["abk","abk – angular blocky"],["sbk","sbk – subangular blocky"],["pl","pl – platy"],["pr","pr – prismatic"],["cpr","cpr – columnar"]];
+const CONS=[["Moist",[["L","L – loose"],["VFR","VFR – very friable"],["FR","FR – friable"],["FI","FI – firm"],["VFI","VFI – very firm"],["EF","EF – extremely firm"]]],
+            ["Dry",[["S","S – soft"],["SH","SH – slightly hard"],["MH","MH – moderately hard"],["HA","HA – hard"],["VH","VH – very hard"],["EH","EH – extremely hard"]]],
+            ["Cemented",[["SR","SR – slightly rigid"],["R","R – rigid"],["VR","VR – very rigid"]]]];
+const COLOURS=[["Black","#2A2522"],["Dark brown","#4A3326"],["Brown","#7A5638"],["Yellowish brown","#A97B3E"],["Reddish brown","#8C4A2F"],["Light brown","#B89772"],["Olive","#7D7B4E"],["Grey","#8C8D88"],["Light grey","#BDBDB6"],["Bluish grey (gleyed)","#7F9096"]];
+const ROOTS=["None","Few","Common","Many"];
+const MOIST=["Dry","Moist","Wet","Seepage"];
+const CF_KIND=["Gravel","Cobbles","Stones","Angular","Rounded"];
+const VEG=["Lawn / grass","Pasture","Mixed forest","Coniferous forest","Deciduous","Shrubs / brush","Cleared","Wetland plants"];
+const POSITION=["Crest","Upper slope","Mid slope","Lower slope","Toe","Flat / level","Depression"];
+const DRAIN=["Rapid","Well drained","Moderately well","Imperfect","Poor","Very poor"];
+const SB_DA=[["dw","Surface source of drinking water",30],["well","Water from supply well",30],["irr","Irrigation or geo-exchange well",15],["mon","Monitoring well",6],["suct","Drinking water suction line or cistern",30],["fwp","Fresh water body – permanent",30],["fwi","Fresh water body – intermittent",15],["mar","Marine water body",15],["brk","Breakout point incl. downslope drain",7.5]];
+const SB_TK=[["dw","Surface source of drinking water",15],["well","Water from supply well",30],["irr","Irrigation or geo-exchange well",7.5],["mon","Monitoring well",6],["suct","Drinking water suction line or cistern",15],["fwp","Fresh water body – permanent",10],["fwi","Fresh water body – intermittent",10],["mar","Marine water body",7.5],["brk","Breakout point incl. downslope drain",0]];
+const SOIL_F=[["8.1","Gravelly sand"],["6.6","Sand, loam, structured soils"],["4.1","Massive clays & silts"]];
+
+/* ============================================================
+   Storage: IndexedDB, falls back to memory
+   ============================================================ */
+const store=(()=>{let dbp=null;function open(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{try{const r=indexedDB.open("ssfl",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return dbp}
+  async function get(k){try{const db=await open();return await new Promise((res,rej)=>{const t=db.transaction("kv").objectStore("kv").get(k);t.onsuccess=()=>res(t.result);t.onerror=()=>rej(t.error)})}catch(e){return undefined}}
+  async function set(k,v){try{const db=await open();await new Promise((res,rej)=>{const t=db.transaction("kv","readwrite");t.objectStore("kv").put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)});return true}catch(e){return false}}
+  async function del(k){try{const db=await open();await new Promise((res,rej)=>{const t=db.transaction("kv","readwrite");t.objectStore("kv").delete(k);t.oncomplete=res;t.onerror=()=>rej(t.error)});return true}catch(e){return false}}
+  async function getPrefix(pre){try{const db=await open();return await new Promise((res,rej)=>{const t=db.transaction("kv").objectStore("kv").getAll(IDBKeyRange.bound(pre,pre+"\uffff"));t.onsuccess=()=>res(t.result||[]);t.onerror=()=>rej(t.error)})}catch(e){return[]}}
+  return{get,set,del,getPrefix}})();
+
+/* ============================================================
+   State
+   ============================================================ */
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>new Date().toISOString().slice(0,10);
+function newPit(n){return{id:uid(),name:"TP"+n,location:"",depth:"",layers:[],wtObserved:"",wtDepth:"",shwt:"",shwtBasis:"",rlType:"",rlDepth:"",limiting:"",notes:""}}
+function newLayer(from){return{id:uid(),from:from??"",to:"",colour:"",texture:"",grade:"",type:"",cons:"",cfKind:"",cfPct:"",roots:"",mottDepth:"",mottQty:"",moisture:"",notes:""}}
+function newHole(n){return{id:uid(),name:String(n),location:"",pit:"",readings:["","","","","","","","",""],excl:[]}}
+function newSite(){return{id:uid(),example:false,created:Date.now(),updated:Date.now(),
+  prop:{client:"",contact:"",phone:"",email:"",address:"",pid:"",legal:"",date:today(),investigator:"",weather:"",lat:"",lon:"",gpsAcc:""},
+  site:{desc:"",vegetation:[],slope:"",aspect:"",position:"",drainage:"",surfaceWater:"",climate:"",encumbrances:"",services:"",boundaries:"",proposedArea:"",existing:"",notes:""},
+  pits:[newPit(1)],
+  perm:{air:"20",idIn:"4",auger:"7",holeDepth:"40",finDia:"8",F:"6.6",holes:[newHole(1),newHole(2),newHole(3),newHole(4)]},
+  perc:{tests:[{depth:"",t:["","","","","",""]},{depth:"",t:["","","","","",""]},{depth:"",t:["","","","","",""]},{depth:"",t:["","","","","",""]}]},
+  setbacks:{da:{},tk:{},na:{},comments:""},
+  photos:[],notes:""}}
+function exampleSite(){const s=newSite();s.example=true;
+  Object.assign(s.prop,{client:"Example: J. & R. Morgan",contact:"Jamie Morgan",phone:"604-555-0142",email:"jmorgan@example.com",address:"Example: 4127 Ridgeview Road, Sechelt BC",pid:"012-345-678",legal:"Lot 4, District Lot 1427, Group 1, NWD, Plan 12345",date:today(),investigator:"",weather:"Overcast, light rain previous 24 h",lat:"49.47412",lon:"-123.75361"});
+  Object.assign(s.site,{desc:"gently sloping, partially cleared lot with second-growth mixed forest along the east boundary. Proposed dispersal area is a level bench west of the house site.",vegetation:["Mixed forest","Lawn / grass"],slope:"6",aspect:"SW",position:"Mid slope",drainage:"Well drained",surfaceWater:"None observed within 30 m",climate:"Coastal, high winter rainfall",encumbrances:"No covenants on title. BC Hydro ROW along north line.",services:"Water service from the road (municipal). Hydro underground along driveway.",boundaries:"Pins located at NW and SW corners",proposedArea:"West bench, 12 m from house",existing:"None"});
+  const p=s.pits[0];Object.assign(p,{location:"Centre of proposed field",depth:"150",wtObserved:"No",shwt:"95",shwtBasis:"Mottles",rlType:"Dense glacial till",rlDepth:"120"});
+  p.layers=[Object.assign(newLayer("0"),{to:"25",colour:"Dark brown",texture:"Loam",grade:"2",type:"gr",cons:"VFR",cfPct:"5",cfKind:"Gravel",roots:"Many",moisture:"Moist"}),
+            Object.assign(newLayer("25"),{to:"95",colour:"Yellowish brown",texture:"Gravelly sandy loam",grade:"1",type:"sbk",cons:"FR",cfPct:"20",cfKind:"Gravel",roots:"Common",moisture:"Moist"}),
+            Object.assign(newLayer("95"),{to:"120",colour:"Light brown",texture:"Gravelly loamy sand",grade:"0",type:"sg",cons:"L",cfPct:"30",cfKind:"Rounded",roots:"Few",mottDepth:"95",mottQty:"Common, fine",moisture:"Moist"}),
+            Object.assign(newLayer("120"),{to:"150",colour:"Grey",texture:"Sandy loam",grade:"0",type:"m",cons:"VFI",cfPct:"25",cfKind:"Angular",roots:"None",moisture:"Moist"})];
+  const p2=newPit(2);Object.assign(p2,{location:"8 m downslope of TP1",depth:"140",wtObserved:"No",shwt:"100",shwtBasis:"Mottles",rlType:"Dense glacial till",rlDepth:"115"});
+  p2.layers=[Object.assign(newLayer("0"),{to:"20",colour:"Dark brown",texture:"Loam",grade:"2",type:"gr",cons:"VFR",cfPct:"5",roots:"Many",moisture:"Moist"}),
+             Object.assign(newLayer("20"),{to:"115",colour:"Yellowish brown",texture:"Gravelly sandy loam",grade:"1",type:"sbk",cons:"FR",cfPct:"25",roots:"Common",mottDepth:"100",mottQty:"Few, fine",moisture:"Moist"}),
+             Object.assign(newLayer("115"),{to:"140",colour:"Grey",texture:"Sandy loam",grade:"0",type:"m",cons:"VFI",cfPct:"25",roots:"None",moisture:"Moist"})];
+  s.pits.push(p2);
+  const R=[[450,444,438,433,428,423],[450,446,442,438,435,432],[450,443,437,431,425,419],[450,445,441,437,433,429]];
+  s.perm.holes.forEach((h,i)=>{h.readings=R[i].map(String).concat(["","",""]);h.location=["NW corner of field","NE corner","SW corner","SE corner"][i];h.pit=i<2?"TP1":"TP2"});
+  s.perm.holes[0].excl=[1];
+  SB_DA.forEach(([k])=>s.setbacks.da[k]="");s.setbacks.da.well="42";s.setbacks.da.brk="15";s.setbacks.da.fwi="22";
+  s.setbacks.tk.well="35";s.setbacks.tk.fwi="28";s.setbacks.tk.brk="9";
+  ["dw","irr","mon","suct","fwp","mar"].forEach(k=>{s.setbacks.na["da_"+k]=true;s.setbacks.na["tk_"+k]=true});
+  s.setbacks.comments="Neighbour's well at 42 m measured from field corner by tape.";
+  return s}
+
+let S={sites:[],settings:{company:"",name:"",email:"",phone:"",reg:"",logo:"",format:"xlsx",theme:"",photoGps:"Yes"},ver:1};
+let view={name:"home"}; // {name, siteId, pitId, holeId}
+let saveT=null;
+const dirty=new Set();
+function save(){const s=cur();if(s){s.updated=Date.now();dirty.add(s)}clearTimeout(saveT);saveT=setTimeout(flush,350)}
+function flush(){dirty.forEach(s=>store.set("site:"+s.id,s));dirty.clear()}
+function saveSite(s){return store.set("site:"+s.id,s)}
+let metaT=null;function saveMeta(){clearTimeout(metaT);metaT=setTimeout(()=>store.set("meta",{settings:S.settings,ver:2}),250)}
+window.addEventListener("pagehide",flush);document.addEventListener("visibilitychange",()=>{if(document.hidden)flush()});
+function cur(){return S.sites.find(x=>x.id===view.siteId)}
+function pitById(s,id){return s.pits.find(p=>p.id===id)}
+
+/* ============================================================
+   Calculations (mirrors BHC Design Workbook formulas)
+   ============================================================ */
+const num=v=>{if(v===""||v==null)return NaN;const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:NaN};
+const fmt=(v,d=0)=>isFinite(v)?(+v).toFixed(d):"—";
+function minOf(arr){const a=arr.filter(isFinite);return a.length?Math.min(...a):NaN}
+function pitLimiting(p){const own=num(p.limiting);if(isFinite(own))return own;return minOf([num(p.shwt),num(p.rlDepth),p.wtObserved==="Yes"?num(p.wtDepth):NaN])}
+function permArea(perm){const id=num(perm.idIn)*2.54;return 0.3142*Math.pow(id/2,2)} // workbook E13
+function holeCalc(perm,h){const r=h.readings.map(num);const rates=r.map((v,i)=>i===0||!isFinite(v)||!isFinite(r[i-1])?NaN:r[i-1]-v);
+  const used=rates.filter((v,i)=>isFinite(v)&&!h.excl.includes(i));const avg=used.length?used.reduce((a,b)=>a+b,0)/used.length:NaN;
+  const flow=avg*permArea(perm);const kfs=flow*num(perm.F);return{rates,avg,flow,kfs}}
+function permSummary(s){const ks=s.perm.holes.map(h=>holeCalc(s.perm,h).kfs).filter(v=>isFinite(v)&&v>0);return{n:ks.length,avg:ks.length?ks.reduce((a,b)=>a+b,0)/ks.length:NaN}}
+function percCalc(t){const v=t.t.map(num).filter(isFinite);return v.length?Math.min(...v):NaN}
+function percSummary(s){const l=s.perc.tests.map(percCalc).filter(isFinite);return{n:l.length,avg:l.length?l.reduce((a,b)=>a+b,0)/l.length:NaN}}
+function sbStatus(s,grp,k,spm){if(s.setbacks.na[grp+"_"+k])return"na";const v=num(s.setbacks[grp][k]);if(!isFinite(v))return"";return v>=spm?"ok":"bad"}
+function sbSummary(s){let ok=0,bad=0,blank=0;[["da",SB_DA],["tk",SB_TK]].forEach(([g,L])=>L.forEach(([k,,spm])=>{const st=sbStatus(s,g,k,spm);if(st==="ok"||st==="na")ok++;else if(st==="bad")bad++;else blank++}));return{ok,bad,blank}}
+function siteSummary(s){const shwt=minOf(s.pits.map(p=>num(p.shwt)));const rl=minOf(s.pits.map(p=>num(p.rlDepth)));const lim=minOf(s.pits.map(pitLimiting));
+  const cf=s.pits.flatMap(p=>p.layers.map(l=>num(l.cfPct))).filter(isFinite);return{pits:s.pits.length,shwt,rl,lim,cfMax:cf.length?Math.max(...cf):NaN,perm:permSummary(s),perc:percSummary(s),sb:sbSummary(s),slope:num(s.site.slope)}}
+
+/* progress per section: [filled, total] */
+function prog(s,sec){const f=v=>(Array.isArray(v)?v.length:String(v??"").trim()!=="")?1:0;
+  if(sec==="prop"){const k=["client","address","pid","legal","date","investigator"];return[k.reduce((a,x)=>a+f(s.prop[x]),0),k.length]}
+  if(sec==="site"){const k=["desc","vegetation","slope","position","drainage","surfaceWater","encumbrances","services"];return[k.reduce((a,x)=>a+f(s.site[x]),0),k.length]}
+  if(sec==="pits"){const done=s.pits.filter(p=>p.layers.length&&p.shwt!==""&&p.wtObserved!=="").length;return[done,Math.max(s.pits.length,1)]}
+  if(sec==="perm"){return[Math.min(permSummary(s).n,4),4]}
+  if(sec==="perc"){const n=percSummary(s).n;return[n?1:0,1]}
+  if(sec==="sb"){const x=sbSummary(s);return[x.ok+x.bad,x.ok+x.bad+x.blank]}
+  if(sec==="photos"){return[s.photos.length?1:0,1]}
+  return[0,1]}
+
+/* ============================================================
+   Small helpers
+   ============================================================ */
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=sel=>document.querySelector(sel);
+const DROP_SVG='<img class="drop" alt="" aria-hidden="true" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ0AAADwCAYAAAAaTGZSAAA1xUlEQVR42u19eZikVX3u+zvnW2rrnoVFUBHQJ6jTboiB64IMAm5ENFervYqKSxQBFSKIqFerSyNGjUuC4JInMcZ4b6y6PonGGBRwZtjXKEI3ys4gs6/dtXzLOb/f/eP7qqenZ+u9q6rrPM8w8zA9Vd/ynve8vx3orWktEVEAcP2DT511w0Ob3zPx//XW1JbTewTTW0NDQwBAIviMiDm2cv/9/wogFhEiIuk9oR7o5nRVRPQgkb3hwade63j+aY7rAjX6X0T0zxURDcD2ntKhV+9YmPqxSkVAfvHgg75lfJ5AsMaKCF+0Zs0aZ3hoSESEek+qB7o5W1VAERG7nHtLvlA4JQoDGwVNyeSyJ8szn392uVzmau959kA3lyw3PDQka+7fXADRZ601IgCBIEppGLafvPvuu91hQNDjukOu3iOahpa77sE/XljoW351bXS3JSINEQEgfjar4jB6y2v+5Kiftn6299R6oJsVywHA9U+NrqRm47eO4z7DRKGASCV/z5zLF1RjrHa7s+mhU1evXm17VmzveJ2dlqtCEZGgXr+gUOh7pokCbgEOAIiUatbrnMnn/4d9xvPeQESyZs2anleg5zKZ2SqJqCLA1/9h/TNAdGmz0RABqf0cD6K1BltzIYD/WLt6NaenSI/xekw3vTVQrRIRicC5LN/Xt9yaiIloX8wR6XptTLxM5vW/enDDaWUirlQqvWfbY7rps9wgkb3ukS0nKObzm/XagViuJY7Z830dRdEVJZGbij2W6zHdtFmuZWTF8aey+XzWWrt/lpvAdo1ajX3Pf+0rH9h4KhFxLybbY7rpWKyKiOwvH9hwkue772rWa0wTjIeD/UPH83QchVeUSnJT70n2mG5aLpKEvbjseL4jwoKpuJeIdLNeYz+TPfPUd259JRFxGpPtrR7oDuIiScNdv3540xmZTObsZr3GAOnpoFa7rsMILwKAnrbbr/7trYnPQ0RoeBjOJm/jDZlc7lVBo26nAzoBRJMSrXVkw/hVpz/v6P8GQETEvcfbY7oDaTne7G78s2wu/6pmvT49lkt2MTFb8bKZjIH9BBHJUO/R9kB3ENbnW2+9NWuFy8wzD58KoOq1MXE8739eP/LUS1O/XU/b9UC396pUKoqIpLHy2HP7+pe9IGw27ZQs1v3aE0TCzNlczhWFTwDA8PBwT9v1NN2+Fut/PfRQnyv5ez3fPzYKQ5kp6CagTwgwysdLTz/mqGHpabse002yWMXl/IWF/mXHhUEwe8ABEGbOFfpc0+SL0Ms86THdZJa78YmtR8Wx/Z3W+jATxzho9GHqny1aawBoCNOLzzjhaY+URFR5ibPdkme6arWqiEjCZnRJvlA43MQxzwXgWtrOWsu5fCHPYi4DJoTXeky3tF0kNzy4+TkCvo8UZdhazBXoJrKdCBrwMi8+49jlj7S+t8d0S1PLEQAYia/IFQpZtobnEnB72M5wrlDIc1C/bOL39phuqblIRPQgwNc9tPUlnqduNXHspfqO5uEhMylFAqmB1Ymv+ZMjHx0CaKlquyXLdEVAQCTM0Wdcz88ITzGoP5MjFlCW2eYL/X0M+34ikqWs7ZbkjVcqogcHyd7whw2vdnxvXRxFLBAi0Lw9DxERx3Vhrd0Ojl9yxgnHbEiP3yXnSlmKTEfDw0NSElFW+AuO66Z+E5rXDUhEZOKYC339h4s4FxKRVKvVJXnSLDmma7HczY9uPQeu89Nmo8Fz4QieKtu5rgtjzI7YRC98w6rjNpZKJVUul5eUtltyO61YBP/tLx70N9ZGyywimmjByraIiOI45kJ//2Ge418EAANDQ0tu4y8p0FUqFU1E4q20b9ol9JI/bNwsO8NQWREsFPiIiIJmAyz8gWvvX79yEOCl1nhn6YBOhIaHh6Uioln4EiWQkK1srNXxxO5RbG82sUDgU1EYcaG//yjHVe9LY7JLavMvmR3W6jFyzW33n+Nlsj+NgibvaQ0hEACeVliRyWCZ58PVCiwCnp+HxK7nURzH630ve+L1//iN3QCwVLTdkgBd6/gaWrtWH+EffmM2n3952Gzsk4YuKQA9rdHveVie8eFrDU5BObfXxLavf7muje667MznPvNrS6nxzpKg9VY/kiOyR57tZ7MvDxuN/aahEwBFhJgZW5tNPL57FJvrDcTMUESYywgZEVEYBgLSH7vpiSdWFJeQtlsSoBseTomK+VKlNOQQDlkC4BDBimBbCr4t9QYia8fBN3vmIxWFIRf6+54VBu77iUiWSlPFrt9ZlUpFDw4O2qtvHTnN8Z0bTBwrkiSHd6oPiAGwCBwi9Ps+VmZ8+I4zfhzP4thnP5NRYdB8zPGesWr1cQhTFuzqKEXX76xisZiKc/tJz/O1iPB0zkmZwHwCYGcQ4PHRUWyq1REaAyKCmuGxS0QqCkObK/Qdz/Gmd9ISsWS7mula4vw7dwy/mrSzdi4yglvuFBaBIkKf52FF1kfOcZMTfLrMJ8JeJquCRv33u3bKS4svPybodrbr6l01nLrbrOUrXD/TOilnZ3Wmv+sUu7vDEOt3j+GpsRoaM2E+IhUGDc73L3veYU9z35HEZLv7vXQt0xUrFV0dHGyx3DobxwKav6B+i/kKnovlGR9510v04NSYz3qZjAobjd87fvzS1ccdF1ICyK5ku67dUcXW22S5xMtkIXPAcgdbLeYbDSM8OTqGP46OoRZFezHfQRCkw2ZT8n39z7exdy4RSaWL301XtgprNTT81h33v0TBObtZrwkRzWuFfQtQLYCNRRFqcYyC62KZ76PgudBE445m2teoEGYWEblARP5pKB2G0o3arit300C1SgCgWC738zlPhBc8vKTSGO5YFOGPY2N4cnQMo2EEmsCKk9Ckm426ZLL5k6578I9v7uZhKF2n6VK/HF9168iJnqdvYWZPmGmx77Wl7fJuovn6PA9qEvOJCGdzeWrUa3ftMs84tTgAA0C6je26bicNF4sCQAj8Cc/PZNhaaYfNpVJtV49jPDVWwxO7R7EzCCCyh/lApJqNuuTyhZNXuhvOJqKuZLuu0nTFSkUPAfy0O0deoEi9JWw2uN02VkvzBcZgY81glxNiRSaDPs+FVgqSnroicsXdIj8/aQgWXTYeoKt20apiUYhI2PAFfjaXsdYKEbWlhGhZtU1jsKFWw+OjY62cPh0HTZvNF07e9tDGc6jcfQ2zu+Zmkh4hkO/efN9ztFbnBY16R4SUWsduZAw21xt4fPcotjbqJAA84CMtSdgDXfvaRWIUXZrJF/J8qBb8bch8mgixtdhSD9TvN23kUcun/mz48TOISLqpqWJXgC7thCTfvfm+5yit3tMpLDd5SevYVQTDLOvHAr3u9xsvb6Xa90DXRiv1y4l11MezHchyk4GnFCEIrX5s/RYxol57SfXW08vlMhe7hO06HnSlUkkNDg7y926/95kAndupLNdaWhEagcH6LXXERtj1fRjGJ1uGErrAt9rxoBsYGCAAErH+cLaQX2a5c1lOK0IzsHhySx3GMpQiHTYb7Pj+mR+r3HRWmYiLXTDorqN3TUlElQH57o0PHGUzcq9WzuHWmo5kOpUyXAtwrX0jIuxlcypqNu4In+OfevRJJ9mhDo9SdPSuGahWCURiXb4om+87wpiYO+2eZALg1k8CXGrVqqjZYDeTPSX7uDm7TMSDHd4DpWOZrlQSNTQE+c5vH3w6h+a3juMcZk1nsZxM0HAJw8mB2vhY18/qKKzfuQnLT11VHDDlhOk6ku06dscMDCQDgDmMP5Dv6z/cxJ3HchMBFx8YcACgo6DBnp87+WiMnp0MQ+ncKEVnMp0ICYDv3fNov4kbv3M9/xgTxx3FcloR6vvRcAe+5aSWImo27tykNryiWixyp2YWd+RuqaTF08Y2P5DrW/asOAo7CnAqBdz6KQJuXNuFTfayuZOP1seeAyKpVDpzrGfHMZ2IEAH42zse6tMS3e95/jNNFAoWqMfcXGi4ZmCwfksDcVq8PY17ZzeTVXHKdpVikTvRiu04pqsCCkTiiPmLfF//MXEccicBbqKVOt16WSJScdhkN5s7+Wg88xwikk6MUnQU07V6fXz75vuWw3V+47jus0wcCtD+oFOTjAY18ydvXT+roqBx58rBV7xiCEioH53DeB3FdK0ZXvC8/5Ut5I+Nw6AjAKcnOX7V7La6jsKGeJnsKTurt705YbvO8tt1DNOJCA0NgQp/fm82F7i3e74/EAdB22u5A0UaZvks2MvkKAoad64ciV6FodVcTkcU9JhuLlmuWlXlMnGu6Qxmc/kXRGF7aznZC3ANxHMEuHFLNmiIm8mesusF/p+XibjYQVGKzrjQNJ/sq7/8bR4il1ljBG3cy032e6TSfDwXEStDl/7zL/Orknw76oFujlYFUOVymbPL3LdnC32roihYsDb8M9dwNjUaeF4mVBCRMlHIXr6wKs70Dyb5dp0RpegMTSdC373nHsdE/m+8XG4gbjbb9midDw13EEZl1/NVFDYfGGvEL/3Be1eHnaDr2n5nVCqiQSRsc3/mZXOreoDbizGUiULr5wrPX5bPvANEUuyAKAW1+9UJCw0BdMSt992WLRRODhZwws1MNVw8XxruAJas62dUFAQjY83opB+8b3WYFlu0LeO1NdNVfiyaiOSoOx94cyZfODlsY8DtlfG7gInLSZQiYD+fX7Usm3kHQNLulmwbM52QCDAE0JG33X9rJlc4JQjqlkC6/QCX1jTMLtIwW7ajKAgeOKwZnTT03tVt3d+ubXdEpZJEH46684E3+7n8KUGjJu0EOExguPVzE2mYLdtJJpdftTPvvYOovdmuPS9MhIaHISJCzHwJEQFKcfsBzmD9ltqCGA2HBJ4iYbYiQpeWfnZ3btVwUdp1LkVbNtCpVKtqsDxoj3zDA6e7nvfKsNlgAtqC5QRJl6X6IhgNh7gwHYcBe9n8wLZG/e1Xl+n7IwMVDaDtpvC0JdMNF5NdKhxf4XieljaqBdBECGOLJ7cuvNFw6GNWibAVRXTppf/82/yq4aIA7cd2bQe6SqWiy0R8zR33r3Y9/6ygXmdqk65FSaObBHCxWfwjdT90p00Usp/LD5hMs1guExcr7feO2+6ChoeHU5aTK1zPJ0myJ2jxWSQB3PotdQShbSuGm3T8kzUxGPy5D1XuXlYtgtstTt1Wmi4dNsJHv3HwVM/PnBk06kxtsDHUJMBpRW1b+0eAMmFoM339x1Nt7P0g+kaxUtHVNtJ2bcV0w0NDAkDY2gtd31eSDN5a1F1KHQS4CZYsmSgQIbnkoz+8vb86OGjbie3ahulERBERX3XryEuVq97arM1/G/4pa7gOAlzr0m0c2Uy+71mh1D4A4BvFKlS7sF3bMN1QyzoEX+5nc46I8OIDjrF+Sx3NyEJ1DuBSbUdkokiE5JJPVq5rK23XFqBLmxryNXcOn0iOfluzNraoLLfnSK21tdFwKG0XR4Fkcn3Pakr+/SCSSpvMHGuLixioVklEiI18MpPL68VkOUWEeKKVqjq3sRWRgokjIUUfvfjffrN8eHhISqWSWvKgK7aGAN85ssr1/LcE9dqiZZIoQspwjXEN18mLAGXjkL1s/niJ6u8rl8s8MjBEbXBd7WFAXH3bfd/J9fWf3xgbs4txtKoOtFKnpu3AjuuRNdET5GRP/OZbXrI7lRCLdnuLynSlkigAcs2d9z5XO+47w2ZzUTovTTQaWkdqt3SVJkCZOGQ/VzgOcfO9RCSDi6ztFvXLR9J2XxKrv/SzuT5rzIIPG9nHaFBdOQKXTBSChT/+0R/e3l8pgrGI2m7RvrgkoqrFIl9z873P1a577mKMVFJEiC13hdFwcLYjZeLIZvL9x4hrP0hEUkx6NS9BQ4JIRNHFfi5XWMg2/EkJARAai/Wba11hNBzyUQuUCQNRmi67sHLHUdXBQV4sS3ZRvlREqAzId+8eOZqUfnvYbAhkYaqYBICjAGsZG7Y1EcUMR6t9NFzXTfYlIhPH7Of6jtKwFwKQkZHFYbtFAV21mrT7srF8NFvoW2nNwuQJiSSAGwuBOx4ew1PbxtAIDYLYQCRhP5VOrNGK0KGTAQ52zqo4aApELriwsuaoaqW4KGy34LHXUqmkBovgq26+5+lQOD9qNhcE/C3A1UJg7UMGO2ouCnYXCAF0CjRPK3iek/zuKjg6/aXUviyYDgdugbVDyI7YxjZT6Ds8qNcuBNHnRhZhLsWCf+HAwBCBSJST+Wiu0L/SmNjOt5YTARwNNA2w9qEYO+sWnufBustBEFgRxMaiFsbYMdrExp11rN86hvVbx/DEljE8sXUUm3bWsWMsQC2IEcYGlpM0P0fT+CRDSkeot4DZjke0CFQcBEKg8y+r3HFUtbjwbOcsLMuJGhwEX3XzA08n8IeCRl0WAnBaAbEFbnnEYHtd4GsCM8OoHJRuQtsm0AIM7Znoa1lgrUEYA3XE45+plYKbsqDrKHiuhu9ouI6CVsk0w3HnsgACgcgkQ2ZR2c5YP1c4MqgtDts5C8tyVQIGWan7PpwtLFvZGBud1+hDUpcKGBase9jgj7sFvgOw7PkJo/uhOARNQIWMSyDsAePehhDC2CCI9vwggUCEBIQpAD1Hp7/UuEZUKvk8WVwwUhwGQko+fGHljmuuGTx5cyvpoqtAl5bD8TU3/W4FiN4bh4GA5u8ZC5JYqrHYC3Ay6cxjcmF0H1yze1qvnCgB2eQ551HMCGO7l2FCBDh6DwhdR+0Bp1bp59D414vIPtc517KKbWy9XN8R0qhdCNDnRqoLx3YL9kXVtA0/XP0X2b7+Y+IoYpqn1q2t/v4E4LbHDwy4PWxXAJM/IxUm+4AxAZqjaDwlSiQB41gzwrbRJjbtqOOpbTU8sWUUj23ajT9urWHzrgZ2joWoNSNEMaebhvb6NVGJyOyfEZkwECJ8+JKfrDu6UiwuWJTCWUiW+/tb718ZiXwsDgOheTpJRAClkg+/5TGDx7bzQQC3x5cQucuQibbOKfAng7F1BGOiZhRGaCzQxDjQHE1QqW70HAXfdZIjWtMea3oCxUrKjq37xxQeLoGUjWObKfQdEdRqFxDR54qViqouiOdmAVYlTV/61u33fSJf6P/KfGWSjDMcAbc8avHINgtPT40VhBRcsxuuGV0Umb+P1Zu6ZMZpiRIDxnES0HktA8bVcHRqwKTsuj8DRvbzwkVEtOOArd3mQb/ob4onb06na0tHM52IEBHxNTf9bgUzfTQOo3mzWCk1HG551ODhrYyMA0xVGZMwjC7AsQFIogUHnkwG4EQDJv0DiyCMDIK9LA6CVoCb6kNXJ2CcbMDo/RgwREQ2NtYv9B3RrI1eCKLPDVbmvyvAvIOumqTRWHKct+XyuWOa85ik6WrgnvUWD21NjlSe9ovXiJx++PH2dnbwQtHeIBXBOBgFBzdgxg0ZrUAASJPiKBBXqwsv/X/3/MPX3vrS9aWSqHJ5/izZeQadULEI/v6axzIN1D9urZk3/nBUArj7Nkz9SN2XKRmssjA6D8fU2jbUIFO0plsGzLg1jaRbaCvM52kNz9XkKrJ9K1Yc1myOfQJEH5lvv928fnhFEou1kW2cmy30PS8Kgjlv3dpy/v73kxa/22jhOrO17BjG6YMoB50Y9j+YNd3KpLEsiTUdRNg+2sTGXXX16PpN8uS2+nln/d1Pj68ODtr5tGTn7YNFhIoAf/fup3IEXGpNLHNNHCKA5wAPbLL43QYLT2FO/FsCjdhZhm5aMsmYaIFRK4KjFTEzk5ctaOt+HADmM99u3kDXGqnEZtc7MrnC86Nmc05HKgn2AO7u9RaunttXZFUWVuXQhUlO+4JRACJRHDUFhPPO/vrPn53k281P46L5cc6K0PDQkHzt1luzLHIJWyOklMwp4HQCuDufsNDqwFpnNit2+iGksTQWEVvLrp/rs8BfAJCRgeq8sN28PNGBgQH9kY98hN9y/mVv9jOZj4RBc86KpxlARgN/2My4YwLg5mXzKCdxSXATnToEfLo+JxEGRJ77nFPf+qOfffhtYwAU1q2b0/08968sHalUqtzvieXLE/f43DgbBYCvgcd3MO58woxHHubtHQjD6jxYZbr+mE0wR4qNYTdbOFLy/gWYp1qKOf/AtN2Xvea2B97qZf1qGDRkLmKsIoDvJIC76REzHu4SWYBXIREy0bYlATyICDkuxJqtypUX/+Kiszenp++c3fycM90gwKU1axyW+JPYNwljxoBzJwOOFgJwCb+K8hHrvoX6wsWWdsQmZiebP9JGlLDd4Nx2ap/TD6tIMlLpyPzTzsnk8n8aNRs82zb8LbfIplHBzRMBt6C7n2GcAlj5WBJsp4hsFAggF7zmm9c/rVqd2+ziOQVd2tQQsHyhUhoyS0puAW7LmOCmhw3sYgBuwjEbO/1LwqAgQaLtcoUjHAkuAkhG5lDbzdkHVSqiBwfJfuuO4TNcx73exvGsiqc51XBbxgRrHooRxoDWi3vCCQie2Q3HjqLDJtHPSNupJANlzrXdHD25JMYKAIr5Ctf1MJvc1xbgttUEax6MEZrFB1yyQwWxU4CQ2/3HLBFZY9jJ5o/kGBfOpbabkw+pVKqKiORbtwyf4Xj+mc36zEcqMRLH7+5AcOMjBoFJYqvto+G7L0R2ENwRh4EA6kNv+uZPn1atzk1XADUHV4bhYlFKIgqKr9CuB8ywwEME8BQwGgjWPmgwFggc3W5Go8DoLKzOg4S7HXcqYbvc0ww7SVeAOdB2swZd5cc/1mUiPuLOkVe5nn9mOMM2/K3a1NFQsOYhg53NdgTcuNBG7PSDlYOuXyphO4ZccOrXf3L0XNTJzhp0w8NFAQCy8rFEy02/kq5VfR/EwLqHDHY1BK5qZ7eYgOEk1myX++4IUNYa9nKFI3LIfBg0e0t2Vv+4Vftw9S33/anje7dYY5xWHvR0AKcVEFlg3cMxNu4WeE6nvEuCF29fCrFZVloTW96q3OyLf3HR6llZsrNiuhbLgXC562dcEeGZA85gw26BrzuLPGKnP83Y6mrGU9YYdrO5I21US6IUs5gnO+PtKSKKALn6rvtf5qiU5abxmckISyDm5Eh9andaSNNh706g4NrRaRdrd+A5y4o0WWu2ccZ9wXUXvm5rKxFvwZhuaGgIIBKy6hNuJmW5aQCuxQ13PJ4Azu9AwKXvIinW7vYQmaTaLls4wonMRQBmzHYz2pp7ho3c+1wS914AnjBPScvJBKTf8pjBI9umUgzd/tBTEsHv9kyUCVEKl/wX/cfFZ2yZibabEVIHUrCKUZdmCgWfmXmqgGt1Rrq1awCX3JlVPky3++6IyBrLbjZ/pOHmjKMU0/4HJRE1SGS/d8fICaTUu4NabUr5ci3AuQq44zEzXpvaLR4HEkbs9MHq7j5miZBOWNTnv+abP51RBsq0QTdQTfLmY2svy/b1ZRKWO/QxTUh8cXett3hwKyPjdqOLSyPWy7rdfaI4jVK4rC6cSQbKtH64UqnoYrHI37vnD8+F0F0ikrPW0KHaRAiS6vu7n7C4f+PMi6E7Rd95Zhe0HUMXZ6IwaYfExltVjBf/4vKzN6MEwhS7AkzvqRSLICIxcfwRP5srWHvoYSOtyq2lAbhkxbovzUTpZraL2ckWjrQOXQCQFKdROTblHyyVRA0NQf72nuFjfKvvVlodZo05KHBbSZj3b2Tc9YRZEoBrPVZtG/DMjm4+apm0Q2zirbGyL/r1JedsSRupHPIVT5npWiOVnBgXZQuFI0wcy1QAN7zR4p4nDdwlA7jUmtW5tFi7a61ZxSZmN9d3pMf6ncDUoxRT2oYlEVUG5Ht3PPQMA3Ov1mqFMQYHOlpbhTQjG5Pqe62wJBeJhR9vBYntVsZj5bjEcfQEdu988bXld49NJUoxJTgMVKsEIjGIP5LrK6w0xhxwpBIjyfp9aIvFXUsYcAAg5CDWfd1syyprInZyheNk2cr3YYpRikM+j1KppMpDQ3L1jfc/Ex79TjvO8gNNK2QAGQd4dBvjlkfNoraubyd958fboDjoyqchAGvHJRuH6/3+FS/82QdeWUsjADJjpmsNG4Gn3pPr719ujdnvsBFB0u7h0W2MW1qlgugtIM1E6dKnkUzPjtnN9R0bj+5+P4ikWDk42x009XViG34huSBuBvsFqkjiFnlsO+PmR02CZrU0apOnwgVMHmKnAM/shnQh+IhAHEcihIvP/O51/7Rq+OYxiNCBtN1Bn0CrDT876vxcof8ZcRztw3LcKoYeY9zymAGkB7j9Ac/ovhmPDegIbRdH7Gbzx+t69N5yucwH03Z0MJYjAq656b7l4qj7Xc87erKbpOUW2TwmWPtQWipIS8k1Mr2DSHEIP97WrTeYWLImfrwv551Y3XDzmAwNyf46tR8QjUNr12qABJ5zfq6v/+lxGO4DODdt97DmwbRUsAe4gx+zOslE6V62i9nJ5o8fbYTnoVzmwQOwHR1Ey+HbN9+8nJ2Vv/V87xgThtLqF9zScNsbguv+ECNqu9rUNpbdwsjEW0ESd501KxDWjqc4jh6HVi++9uI3jAFDBJT5kEy3Z6TSimIun39WHAR7Ac7VwK4AuPHhZEJgD3DTcDCQSq3ZbtxSpGwcWSdXOE6svA8gKVb2zUChA7Hc1WuH8+TLPV42e0KcdkVnJMXQu4PkSN0dSBLe6gFu2q/Hi3fAsXUIdZ01y8pxlY3DJ/x4xQt/dvkra6mJKwdkumo1aRGhsnhnttB/QhwGFkRKJEnA7AFubhgvdvrB1JljA6Zkyeb6jg3d1G83SdvRZPInAF/95W9zuX7nHs/PnBCHgQhIOTophr7hwRjb6z3AzQXbaVuHb3Z0ne9uryhFbF/4s0++udaqcNiH6aoiCoDkl/nnZvOF58ZRwC3AhTGw9mHTA9wcvhqrczBdODZgT5SicGzouu9PtN2eKTwTBogmWm7N2rV6JHP4XX4295Kg0WRHkwpNMhl606gsoZy4hXk9Sgz8aEvXAa/Fdmzix01YP/H6TxZHW9puHH2VKhSI5IHckX/uZ/MvCZsBa03KMHDjIwng/B7g5vzVMLmpNduNbBexk80fr/3ceRO1nWqx3PAwpHL//Z6wXC6AKErm1t76mMHGtN0D91AyH8YejM6DyQN1G/CIiONIiNTFb/7Gvy1fNTwsIqm9XgFUuUy8vabP8XO5l8VBQwTQtzy6ZzJ0D3DzyXeE2F0O6b7Up4TtMrlnB3DfU06jFAQRKgF03Nq1XiNzxE2ZXO6koNGQWx+z6tHt3VWb2u4HkmuTydrdZM2mUQqycbzej+MX/uzyN9dUpQpVJuKGd+TrM7n8y0zY5LuftKp7qu875/UkmSheV+m7NErBXq5wbOy754FIKJl0N4QjX/e26/J9hdfc/PtRO7KJtdcD3OJYsxykmShdddSycjxlo/BRctSJBABX3TZyViHnX3vLQ3UMbzDKd6kHuEUEnhfvhOZ6VwFPBNbJZDRHwWUKALKOvfw3G6Due8pID3CLf8zGbj+ky0JkRKI4jsRa+pSq3P/7149s0aff8+goZ12oHuDaAXa66zJR2CoxNkdR7N3r/Py+6PPrR7VWEOZ04Dn1SrgWHXZW5WBVAIfrHWzNEqwlWKOFWRNILDP+ytkRRkcVslpMxGRYgTmJiLEkhsReZYTUKylcyBU7/dBxCHRQzzsiAbOCtRrWaIgQREScTE7ZsHYjRTff5PRlzBfJdb8TOxETMYkAlgnMAAvBMhK0cvLnHiAXju2YXMS6D57Z2RFsJ0KIYxdsVSuUn/xfIghbMNNXbyyXDf3Zz+7OZUbNnU42N2CCJhORanXLnGR9JGczIwUg7fVnywBzEsiR5Jnt1XmzB8iZLz8dG9BuwKN05i5bBWsd2BRsE2txRGAdP6tNUL/pyBN2nr5qeDiB49t+dMe5bib7LzYMrUD0VL6shUtJAdn6NRmE439OGXJ/BllPQx6M7whaIvjR1ja7MIJlBWs0mFXawmR/159km4D57F9fsfq/ipWK1iiV1MhHz73veb95/I06k30mm5hpirMgZBJwiJJRS64j8F1BxhP4HiPrMTIeI+sJPEfgOgKtAK0kvdADu2mWOiAJSN0ngCMhFvvMECFY6yCO3USzpddzAMBZx8sqjpu3rLniNZ8BoEY+cpGoYto2glz6EiGZWD+7i0opV/a06CdKWr+6jiDrMwpZxvKCxYo+ixV9Biv7DFb2GywrWBSyjKzPcB2Bo2X8Zlj2ZlRZYnxnnD7YRQyRCSd6LQo9xJGTaDaaAkIBEqGrQSTFkQECSAgQKpVAIwNVB/GxNzqZ7MkmCBgEvWC7+QAXP9GY4fSYnnh8J5bRvkZNd7IjQUsIL9q2QO9EUlbTYKNhWU1zm8Bq11c2av6udviKP73nQyeZVmMdlTQqBlUHByMQvgxSJJAFfW0i+/+VMGRyVLcYclneYkXB4PB+gxUFg+UFg/68RV/KkJ4jULSHIVus2/rMjmY7yixMsbYQTOykrOZOG3CtDyFSpKC+cs/5L4uT1v/JKdp6NXvYzjzrOieTf7VpNu1Cst1M9U7LMp5oMSdA25sZueX6keTPgv28u7a3slvF2lvSRotzf4Qa60xyecyERIQdP6tM2Lh3D8upcVGUQphkZKCasB1QZhNjKm36F3/vT2IyTNSQCUPmfEZ/1iYM2Wewsi/GYf0GK/IW/TmLXCYxcjxH4Cg5MPO2yR0LtSZrz90VMSvEkYsw9GFiZ1aA2/tqU5arVtXE66W9tlHaurP4L7f/ysn1nWWa9bZnu9kw5GS3D0vqaxTAjDvEWy6f1DHO+xlou+AMmRRra27MzJpNbzqJGjhgntOrZ+V4iqPg4SCbf9Htl74imOzsmHhYjxdOsNCXOQ4htOfk6i5bcG8ru6X1FCUWtucKchlGX85ieSG1rvsSDbmiYLEsZ5FPGbLl/mk9KF4gDRm7yyCkp/V6EmduotfC0EccuXMNOIhAyHEA0t+8/dJXNNPSQ9ln009cpVJJlctlftuPbr/OzfWdaRrdyXZzZWVPdopPjtJY3uODnFsrOynW9szOKbEds0qtUD1vmyFJTffJxuGjsZM58dbL998Kdp9OnK2RO6L8L7I1p0FB9+oO94DmQGB0HYGbukplws/uFaWxSA2ZvQG5P6NmKuP9rM6BuXnQfsbMCta0QlTz7E4SEtKukij++q2ffNVY8fiKrmLQ7lfe7Mt2ospl4rf98PafeIW+/xk3ahZEPbabJUPuEzbExFBhAsq9/JKHDBsSlMRpiGzvH5wnvXYILecSm/hhR/GfvrJ581h5aEj21wJ2vz2HR9KRO6LpSyYK3wSldC+dePYMOTlsqADolCEngnJietk4QzLBpMzITKl2FDA8kNMP3+wCy94pRQt7jyLK8RXH0Xevv+Ks3SsqFQ3a/6ywA15ZsVLR1cFBW/zRHVU3X3hbXO+x3WJZ2JMBbG2aXgYCCyEMGHb3KNjIYtXOstIOMduNrhOfeN1lr92a7qzpN7oGADb4sgmSdmHodZVYFAt73NJOecN1Bb4ncGDA9QbsrjGYmBatWFsEolyfhOXb133idVuKaYuSA/38AUFXHRy0JRH1k/NOuZutqbi5AkGkV+i/iEvpxCEYNix2bQqw/Y911HaEMEamO9F8jo9VR8XB2OYG8bcBoerw0CzGNA2lVO9S2TQbTSjVY7tFMEIobSwTjEXYtbGBnRsbCGpR8veKFjfBgcDa9QmivnXXp8/aXqxUFcplPqR0ONgqFiu6Wh20b/vRnd/z84UPRvWxnrZbELAlrGZii7BmENRimIgBEaS53e1gIQlpB2x5B3x63rrLTt92sKElU9Z0q1YVkymerv+1uNloQGmV9HPqrXkBm0rAFgcGo1ub2PVUA7XtAUzE46zXRrqTtZclQH6w7rLTt5VKouZk3mu5TFwqCVUHX/wHZv6Rm80TpNfEaa5N1RaYwlqM3Zua2LmxgebuCGxl8Y/QAxyrSjvKBPVdUNFVgFC5pcdmC7pxbSdCxthvmKBeJ93TdnOq14yguTvCzg0N7NrcRFiP92K9trSuWUR7WWLm76/71Bsen4qWmxboykRcGgL9+3kvf0A4vsbJFQiA7cFm5kcoKYKJGLXtAXZsqGN0axNxaNvuCD0gyylHmaC2Kxb6W0Bo1XBxyiQ0zRxkIRXoq0yzvp2009N20xA/48wFIGoYjG5uYseGBuo7Q7Bp0yP0YCznZ0jAP7jts2c8UaxUVblMPOegK5eJi1WoH7//5CfFxP/o+FnV03ZT02tKJwWiwViMXZsa2LWpgeZYtMcS7ayaDiGllAkaIcR+B8C0WG7aTLdqeEggQkrrq0zQ2E6eS9LrDHtQvcZGUNsZYsdTDeze3EDUNHuxXgfStnX8HEHk/677zOt/XyxWpsVy0wZda47nj99x8pNizT84XlZR74jdV68REIeMsW0BdjxVx9j2ACbm9O86ulRNQErbsBEYyFeBcZca5g10CdsNCyAUG3wlqo9uUI6nsNTZbqLLox5j16Ymdm6oo7ErhLBAdZBeO7ikF3b8PAnbf735M2eOJAm/xPMOunK5zMVKVf37eadsh8i3tO8TeGmyHRGgFEHsBJfHpkkuj+6xhhItF9YDA/pqstWGZrpHZ/b9AFCs3rZCYn2fdt2nszE8ExB3JtjSEFVoEdRiBLUYNuZkmH2XtsEQEetmC9oE9X9d++kz3oFSacp+uVkzXfrUpVitqurgK3YQcJX2M1gK7pOWXouaBru3NLBzQx21nSFsh7k8ZshyZOPQaOi/A4SSFhEzViMzVZRCJMBb/vnOlY6D32nXO9qaSAhdNsCUEmYTKwgbBsFYhCiwEJYuOz4PznJOJq9NY+yn6z772reICNEscqnUzN8FSQmgfz/vlO0E9SXtekTSPaExoiRqwFZQ3xli58Y6dm9pImx0ustj+pgjpYhtHIn2vgyABifNb10w0AFAGZBSSRTc7D/FjcaD2vOVoLMTPVshqji0GNvWxM6n6qhtDxCH3BkhqjlnObD2MkpM+IsbP736tlKpRNXBQbtooAO1mu+8oMbC31CO27FsN9HlsXtTotfqu6KOC1HN+VIgYWYW+joAjMxCy81a0022ZN/1q3tzza3Bbx0/8xyOIwbav0CbKPkPG071Wow4sBCRJcdoB2A562Sy2gaNtRLps1ZjNZfLdIDCyIViugmW7L+87iV1Iv03yvFIhKm9wZaYOyZm1HYE2LmhgdEtAaLA7OXo7S1RYi2I6EvryqebkYG5aTMyV0+XSqUSPX7ce726t+V2x8+8yIYht1s7ilatgQksmmMxwoYBm+72r80cb7A6k9U2rK854jc7z1q1aljKM/TLzT3TpZc4MjBAP3jf8QEp+hItQmPFg7o8FAECBLV4vLClORqNuz16gDswy4H1l6vVQdtqNzJHr2QOX68ITvrePc7xBXO7m8m9NKmXXRy2a+k1axhBLUY4FiOOLCC94/PQJJe24W821q3732eunkqxzWIwHQBIsQp1z/kvi0m5X1msJLFWJoeJkiyPnU81MLYtQBzxuO+ttw7JHgQBNJyrAaBYndvw5ty/AREqVoddxLXbnUz+xDhoMNH8RylIEcCCsJmU60UNA7bS02vTZjlhx8soEzb/O1uIX3Htx94QzXUl95yDIYnJviAC0xdEmOczf2xiIXJzNMLOTQ3s3tREMBYnbbF6em3GXESkv3LtxW8Mi7OMPiwM02FPY8Xiv9y+1skVTjPNxpxqu/EsjyjJ8ghrBiayexivt2as5dI2/L/Jbopfce3KO2IcoN1XWzEdsKexIhF9icXyrJtmy0S9NqEQeUMD9R3hnqzcHuBmLY1IKQKpv7n2qjeGxYEBmo8mKfP2lkolUSMDVUJ0zA1Oru+0pGn2DNpREKCIwCzjUYOoaRJ3R6vJWy9hfk60nHZ8slH4EGJ90rqh1fX0WJnzpztvAj8diGKVdq8Utq2m2dPXa1ZQ3xVi54aksGWfQuQe4ObsbCXHIRB9c1359NppQ0N6vlpBzet5VCxWNIqAmGP/w83k3zAVbZc4cgVxxAhrMYKagY3teF5bb80fy5koeKQeN198T/lNzfRtzAvo5teVUUz63Fkrn+cotMlYqAODbU9WboBdG+ppIXJXVFF1BMsR4ev3lM9pFIt7Rip1HNOl4k6hXObij277dzfX/+a4XrNQibYbz/Kwk7I8uJflsYCLleOSjaOH+6LGS34+9Kbm/trwdw7TASiOx+zUl20YWCgFAoQUwRpBfWea5bG52QWFyJ1nrgoQay9LCvLtn5fPaSTRh/lt6znvoKsODtpSqaSq555yG1vzn15fv44iG49uaciOp+qobQ+T3mu9I3SB4QYLEHn5ZX7c2P0YR84PIULVwaF5N80WqIhmCBChKEJpx5M7nqjtVF5QY2LDlhSkh7UFlW8WEHYyWS0Qjmuj3ydLZ60rn74tOVbL815uQAu4tQhEctKHfnR4/7OP+ktAfVD7uSNs0ACztQSoHtXNr3YTgTier0UYHEfXMsnnb/z0WbdNfD8LcSELPeFi/MZO/cIvj3cc5zIo/S7tZvtN2ICwtURQ6EVM51a2EaxyPIe0Cxs27xU2X1z3v19bTew8UeUhLGh7dlqEh0CnDa3V68qnGwA48/Nr/8R6uBiK3qWdzDITNgCxBoDugW+2cBNWSmvt52DC+pNC9JW+5tg//rx8TqM1WHomvUg6D3QTXCnFgYHxcrZX//Wvnu9S5iJm+x7t5/psmB67PeabkZFABO1k8jDN2hiU+pbr+N+87hOv3AKMd8xnLFI8Z9FfZqlUUiN7gW/t8xXwUVj7XidXyNqgDmbugW9KRoIwgaD9nOKoCSH6Pwz6qxuvWP0A0Bq9VeT5dom0Pej2gC+JVrTo/rQvrnkekXwMhPMcP58bZ76ewXFQIwEA2JrrrTVX3viZM9eMg61Y5EUbq9OuoNvr2B0ZoGo1Yb4zrrzuBCZ1MUi/W3vZvnGDowe+RLUlEQWtHQ82Dn9Lgit//anV/w+AlEolVU52clt1XWjflzZJ873qyv88wVW5i6HUudrNLLNhE8LGQKCXIvhExLaMBBvUNomir441a9+5p3xOY9wqXQQjobNBdyCD4/O/er7yM++GjT/oZAuH27AJtmbJMF+q25STycNGQY1Z/sG36mu/+uxpT7aDkdAdoJug+UYGquPgO/0LNxwrWj4MUR90svnDbJSCLwGe6kawAYDjZRWbSITU/+Uw+usbP3fWfe2o27oCdHvQJ6o4AXynfuHaY7R2LgTUXziZ/OEch7Am6h7wpbpNu74mpcBxsA7A59d86oxfjzPbqmFpN93WXaDb8zIoqTxLwPeav7r+GazV+UTq3drLHMdx1OHgExEBK8fR2s3CRs0RAX/ltObpPyyXiVEqqRKSHtCddmfUBUywF/he9alfHOH0595PhA9rL3Mcmwg2ji2SHFHVGbcEqxQlRkIcbSTCN2v12nfuLL9xdIJu69gxWd0jvCeF184q/fLIyHPeD5IL3UzhGLYxbBQyCGjXFrUCYRKQk8mTjcMGWP7e2PBrN3329U+O67bB9jYSlhboDsB8Z1x53WEWeDugL3T87ABbCxsHbQY+YQGgvayCtRDhn1jBF2/81OrfdJqRsDRBdwDw/Y+vVbLZ4LB3QTsfVa73QhGGjZoMkNBiNXCcaCRoB2yim63IlTdesfq/OtVIWNqg2wt8UNVBsgBwWun7GZU5/j2kcB4p9xVJp4Bx8KmFeSapkaAdrbwM2EQPEOQrv75r8w9RHbQQodLQ4mSA9EA3x/darMg4+E760Hfd/mc/98+F7aXay5wMADZsioCY5rG9mYhYIqV1JgeJo23M/I1G0PhWtxgJPdDt/7VTsbKH+YqVit780PK3KlIXk3ZfoRwXNmjMOfhaRoLO5omjKITwPxkTffmmz77usYSBS866ctliCZSPL+GAuVCxskfzAcCpV97wWof0x6HodcrxYMPGeG7a7E5SYsfLJGniwv/GNvrSjZ8+665uNBJ6oJsO+Ca8+Ff/1fVvUJ77YRjzJieTJxPUE/BBph7fbRkJjqfJccEmut2KfL7bjYQe6Ka5JrPO6i/++pVE8pcCequTySFJq+JDJRckaeJaa+3lYKPm48Ty5V//ZuvfozpoJ6duLcXVA93+wFes6GplAvNded3LFfQlBLxJZ3JZEzb3m9M3MU3cxtF2Eb7KSO3vbv7Un+0cB/Xg0gVbD3RTWKWSqDKGxpMgT//rGwZI9MVM9E7Hz+Rt2ASztRBWBILO5IlNZAD5B0T2q2s+e8YjiZGwxllXPn1JGAk90M0h+EZGquNH4qs/f90Lted9QNicq73s4cIWIgwI/ydivnLNZ8+4dRxsQ6vtUjISemsewFesVMYt2TO+dNOzT7vyhu+c/pV1d62+8rq3T9SGrZqP3tp3/X8lKx7bSf5XngAAAABJRU5ErkJggg==">';
+const IC={
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+ chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+ check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+ cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+ send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 17-3-7z"/></svg>',
+ trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+ timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>'};
+
+function stepBadge(p){const[a,b]=p;if(b&&a>=b)return`<span class="step done">${IC.check}</span>`;if(a>0)return`<span class="step part">${a}/${b}</span>`;return`<span class="step">${a}/${b}</span>`}
+function dot(st){return st===2?`<span class="step done">${IC.check}</span>`:st===1?`<span class="step part">…</span>`:`<span class="step">–</span>`}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+
+/* field builders: path is relative to current site, e.g. "prop.client" or "pits.<id>.layers.<id>.to" */
+function getPath(path){const s=cur();return path.split(".").reduce((o,k)=>{if(o==null)return o;if(Array.isArray(o)){const byId=o.find(x=>x&&x.id===k);return byId!==undefined?byId:o[+k]}return o[k]},s)}
+function setPath(path,val){const parts=path.split(".");const last=parts.pop();const parent=getPath(parts.join("."));if(!parent)return;if(Array.isArray(parent))parent[+last]=val;else parent[last]=val;save()}
+function inp(path,label,opt={}){const v=getPath(path)??"";const id="f_"+path.replace(/\W/g,"_");const t=opt.type||"text";
+  const im=opt.num?` inputmode="decimal"`:"";const unit=opt.unit?` <span class="unit">(${esc(opt.unit)})</span>`:"";
+  return`<div class="field">${label?`<label for="${id}">${esc(label)}${unit}</label>`:""}<input id="${id}" type="${t==="number"?"text":t}"${im} data-bind="${esc(path)}" value="${esc(v)}"${opt.ph?` placeholder="${esc(opt.ph)}"`:""}${opt.aria?` aria-label="${esc(opt.aria)}"`:""} autocomplete="off"></div>`}
+function area(path,label,opt={}){const v=getPath(path)??"";const id="f_"+path.replace(/\W/g,"_");
+  return`<div class="field">${label?`<label for="${id}">${esc(label)}</label>`:""}${opt.hint?`<p class="hint">${opt.hint}</p>`:""}<textarea id="${id}" data-bind="${esc(path)}"${opt.ph?` placeholder="${esc(opt.ph)}"`:""}>${esc(v)}</textarea></div>`}
+const OTHER=new Set();const CHIPDEF={};
+const OTHER_TXT="Other (type your own)…";
+function otherInput(path,label,val,show){return`<input type="text" class="other-in" data-bind="${esc(path)}" value="${esc(val)}" placeholder="Type your own" aria-label="${esc((label||"Value")+" – your own")}" autocomplete="off"${show?"":" hidden"}>`}
+function sel(path,label,options,opt={}){const v=getPath(path)??"";const id="f_"+path.replace(/\W/g,"_");
+  const vals=(opt.groups?options.flatMap(g=>g[1]):options).map(x=>String(Array.isArray(x)?x[0]:x));
+  const allow=!opt.noOther;const isOther=allow&&((String(v)!==""&&!vals.includes(String(v)))||OTHER.has(path));
+  let o=`<option value="">${esc(opt.ph||"Choose…")}</option>`;
+  const one=x=>{const[val,txt]=Array.isArray(x)?x:[x,x];return`<option value="${esc(val)}"${!isOther&&String(v)===String(val)?" selected":""}>${esc(txt)}</option>`};
+  if(opt.groups)o+=options.map(([g,list])=>`<optgroup label="${esc(g)}">${list.map(one).join("")}</optgroup>`).join("");else o+=options.map(one).join("");
+  if(allow)o+=`<option value="__other"${isOther?" selected":""}>${OTHER_TXT}</option>`;
+  return`<div class="field">${label?`<label for="${id}">${esc(label)}</label>`:""}<select id="${id}" data-bind="${esc(path)}"${allow?' data-hasother="1"':""}>${o}</select>${allow?otherInput(path,label,isOther?v:"",isOther):""}</div>`}
+function chips(path,label,options,opt={}){CHIPDEF[path]={label,options,opt};const v=getPath(path);const multi=Array.isArray(v);const allow=!opt.noOther;
+  const vals=options.map(x=>String(Array.isArray(x)?x[0]:x));
+  const otherPath=multi?path+"Other":path;const otherVal=multi?(getPath(otherPath)??""):(String(v??"")!==""&&!vals.includes(String(v))?v:"");
+  const isOther=allow&&(OTHER.has(path)||String(otherVal)!=="");
+  const items=options.map(x=>{const[val,txt]=Array.isArray(x)?x:[x,x];const on=multi?v.includes(val):!isOther&&String(v)===String(val);
+    const sw=opt.swatch?`<span class="sw" style="background:${opt.swatch(val)}"></span>`:"";
+    return`<button type="button" class="chip" data-chip="${esc(path)}" data-val="${esc(val)}" aria-pressed="${on}">${sw}${esc(txt)}</button>`}).join("")
+    +(allow?`<button type="button" class="chip" data-chip="${esc(path)}" data-val="__other" aria-pressed="${isOther}">Other…</button>`:"");
+  return`<div class="field" data-chipfield="${esc(path)}"><span class="lbl">${esc(label)}${multi?' <span class="unit">(pick any)</span>':""}</span><div class="chips" role="group" aria-label="${esc(label)}">${items}</div>${allow?otherInput(otherPath,label,otherVal,isOther):""}</div>`}
+const vegText=s=>[...s.site.vegetation,s.site.vegetationOther].filter(Boolean).join(", ");
+const colourHex=n=>(COLOURS.find(c=>c[0]===n)||[0,"transparent"])[1];
+const isDark=hex=>{if(!hex||hex[0]!=="#")return false;const n=parseInt(hex.slice(1),16);return((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000<120};
+
+/* ============================================================
+   Views
+   ============================================================ */
+function setBar(title,sub,back,right){$("#bar").innerHTML=`${back?`<button class="iconbtn" data-act="back" aria-label="Back">${IC.back}</button>`:""}<h1>${esc(title)}${sub?`<span class="sub">${esc(sub)}</span>`:""}</h1>${right||""}`}
+function setActions(html){$("#actions").innerHTML=html?`<div class="actions"><div class="wrap">${html}</div></div>`:""}
+function go(v){view=v;render();window.scrollTo(0,0)}
+function back(){const v=view;if(v.name==="layer"||v.name==="pit")go(v.name==="layer"?{name:"pit",siteId:v.siteId,pitId:v.pitId}:{name:"pits",siteId:v.siteId});
+  else if(v.name==="hole")go({name:"perm",siteId:v.siteId});else if(v.name==="site"||v.name==="settings")go({name:"home"});else if(v.name==="terms")go({name:"settings"});else go({name:"site",siteId:v.siteId})}
+
+function render(){if(!termsAccepted()&&view.name!=="termsgate"){view={name:"termsgate"}}stopTimerIfLeaving();if(MAP&&view.name!=="home"){MAP.remove();MAP=null}const r=VIEWS[view.name]||VIEWS.home;$("#app").innerHTML=r();refreshCalcs();if(view.name==="home")renderDir();if(view.name==="photos")fillThumbs()}
+
+const VIEWS={
+home(){setBar(S.settings.company||"Site & Soil Field Log","",false,`<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button>`);
+  setActions(`<button class="btn primary" data-act="newsite">${IC.plus} New site investigation</button>`);
+  const own=S.sites.filter(x=>!x.example).length;const ex=S.sites.length-own;
+  return`<section class="home-hero">${DROP_SVG}${S.settings.logo?`<img class="brandlogo" src="${S.settings.logo}" alt="${esc(S.settings.company||"Company logo")}">`:""}<h2>Site &amp; Soil Field Log</h2><span class="eyebrow">BC SPM v3 · Site &amp; soil evaluation</span>${S.sites.length<2?`<p>Record test pits, permeability, percolation and setbacks on site. Send the finished log as an Excel, Word or PDF file.</p>`:""}</section>
+  ${!S.settings.company&&!S.settings.name?`<div class="note">Add your name and company in <button class="btn sm ghost" data-act="settings" style="min-height:32px;padding:0 6px;border:0;text-decoration:underline">Settings</button> so they appear on exported reports.</div>`:""}
+  <div class="dirbar">
+    <div class="searchrow"><input type="search" id="dirq" placeholder="Search address, client, PID, file no." value="${esc(DIR.q)}" aria-label="Search sites" autocomplete="off">
+      <div class="seg" role="group" aria-label="View"><button data-act="dirmode" data-val="list" aria-pressed="${DIR.mode==="list"}">List</button><button data-act="dirmode" data-val="map" aria-pressed="${DIR.mode==="map"}">Map</button></div></div>
+    <div class="row" style="align-items:center">
+      <div class="chips" role="group" aria-label="Status filter" id="dirstat" style="flex:2 1 260px"></div>
+      ${DIR.mode==="list"?`<div class="field" style="flex:1 1 150px"><select id="dirsort" aria-label="Sort sites">${[["recent","Recently edited"],["date","Investigation date"],["address","Address A–Z"],["client","Client A–Z"]].map(([v,l])=>`<option value="${v}"${DIR.sort===v?" selected":""}>${l}</option>`).join("")}</select></div>`:""}
+    </div>
+  </div>
+  <div id="dirlist"></div>
+  ${ex?`<button class="btn ghost sm" data-act="delexamples" style="align-self:center">Remove ${ex} example site${ex===1?"":"s"}</button>`:""}
+  <p class="foot">Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>Data is saved on this device only. Export each site to keep a copy.</p>`},
+
+site(){const s=cur();if(!s)return VIEWS.home();const sum=siteSummary(s);
+  setBar(s.prop.address||"Untitled site",s.prop.date,true);
+  setActions(`<button class="btn primary" data-act="export">${IC.send} Export &amp; email</button>`);
+  const sec=(k,title,sub,v)=>`<button class="navitem" data-act="sec" data-v="${v}">${stepBadge(prog(s,k))}<div class="t"><b>${title}</b><span>${sub}</span></div>${IC.chev}</button>`;
+  const sb=sum.sb;
+  return`${s.example?`<div class="note">This is an example site with made-up data so you can see how the app works. Delete it from the bottom of this page when you're done.</div>`:""}
+  <div class="figs" aria-label="Site summary">
+    <div class="fig"><span class="k">Limiting layer</span><span class="v">${fmt(sum.lim)} <small>cm</small></span></div>
+    <div class="fig"><span class="k">Est. SHWT</span><span class="v">${fmt(sum.shwt)} <small>cm</small></span></div>
+    <div class="fig"><span class="k">Avg K<sub>fs</sub></span><span class="v">${fmt(sum.perm.avg)} <small>mm/d</small></span></div>
+    <div class="fig"><span class="k">Setbacks</span><span class="v">${sb.bad?`<span class="pill bad">${sb.bad} short</span>`:sb.blank?`<small>${sb.ok+sb.bad} of ${sb.ok+sb.bad+sb.blank}</small>`:`<span class="pill ok">All OK</span>`}</span></div>
+  </div>
+  <div class="navlist">
+    ${sec("prop","Property &amp; client",esc([s.prop.client,s.prop.pid].filter(Boolean).join(" · ")||"Address, PID, legal, GPS"),"prop")}
+    ${sec("site","Site conditions",esc(vegText(s)||"Slope, vegetation, drainage, encumbrances"),"siteinfo")}
+    ${sec("pits","Test pits",`${s.pits.length} pit${s.pits.length===1?"":"s"} · ${s.pits.reduce((a,p)=>a+p.layers.length,0)} layers logged`,"pits")}
+    ${sec("perm","Permeability (K<sub>fs</sub>)",`${sum.perm.n} of ${s.perm.holes.length} boreholes complete`,"perm")}
+    ${sec("perc","Percolation tests",sum.perc.n?`${sum.perc.n} tests · avg ${fmt(sum.perc.avg,1)} min/in`:"Optional if permeability done","perc")}
+    ${sec("sb","Setbacks (Table 2)",sb.bad?`${sb.bad} below SPM minimum`:`${sb.ok+sb.bad} of ${sb.ok+sb.bad+sb.blank} recorded`,"sb")}
+    ${sec("photos","Photos",`${s.photos.length} photo${s.photos.length===1?"":"s"}`,"photos")}
+  </div>
+  <div class="card"><h3>General notes</h3>${area("notes","",{ph:"Anything else from the site visit"})}</div>
+  <div class="card"><h3>Status</h3><div class="chips" role="group" aria-label="Site status">${STATUSES.map(x=>`<button class="chip" data-act="status" data-val="${x}" aria-pressed="${(s.status||"In progress")===x}">${x}</button>`).join("")}</div>${s.sentAt?`<p class="hint">Last exported ${esc(s.sentAt)}.</p>`:""}</div>
+  <button class="btn danger block" data-act="delsite">${IC.trash} Delete this site</button>`},
+
+prop(){const s=cur();setBar("Property & client",s.prop.address,true);setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  return`<div class="card"><h2>Property</h2>
+    ${inp("prop.address","Civic address",{ph:"e.g. 4127 Ridgeview Rd, Sechelt"})}
+    ${inp("prop.fileNo","File / project no.",{ph:"Your reference, e.g. 26-0031"})}
+    <div class="row">${inp("prop.pid","PID",{ph:"000-000-000",num:true})}${inp("prop.date","Date of investigation",{type:"date"})}</div>
+    ${inp("prop.legal","Legal description",{ph:"Lot, DL, Plan"})}
+    <div class="field"><span class="lbl">GPS location</span>
+      <div class="row">${inp("prop.lat","",{ph:"Latitude",num:true,aria:"Latitude"})}${inp("prop.lon","",{ph:"Longitude",num:true,aria:"Longitude"})}</div>
+      <button class="btn" data-act="gps" data-target="prop">${IC.pin} Use my current location</button>
+      <p class="hint" data-calc="gpsacc">${s.prop.gpsAcc?`Accuracy ±${esc(s.prop.gpsAcc)} m`:"Stand at the proposed dispersal area for the best point."}</p></div>
+  </div>
+  <div class="card"><h2>Client</h2>
+    ${inp("prop.client","Client name")}
+    <div class="row">${inp("prop.contact","Contact person")}${inp("prop.phone","Phone",{type:"tel"})}</div>
+    ${inp("prop.email","Email",{type:"email"})}
+  </div>
+  <div class="card"><h2>Investigation</h2>
+    ${inp("prop.investigator","Investigated by",{ph:S.settings.name||"Your name"})}
+    ${inp("prop.weather","Weather / recent conditions",{ph:"e.g. Dry week, sunny"})}
+  </div>`},
+
+siteinfo(){const s=cur();setBar("Site conditions",s.prop.address,true);setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  return`<div class="card"><h2>Site description</h2>
+    ${area("site.desc","The site is characterized by…",{ph:"e.g. a gently sloping, partially cleared lot…",hint:"This sentence starts the Site Description in the report."})}
+    ${chips("site.vegetation","Site vegetation",VEG)}
+  </div>
+  <div class="card"><h2>Slope &amp; drainage</h2>
+    <div class="row">${inp("site.slope","Land slope near test pits",{unit:"%",num:true,ph:"0"})}${inp("site.aspect","Slope faces",{ph:"e.g. SW"})}</div>
+    ${chips("site.position","Landscape position",POSITION)}
+    ${chips("site.drainage","Site drainage",DRAIN)}
+    ${inp("site.surfaceWater","Surface water, springs, seepage",{ph:"e.g. None observed"})}
+  </div>
+  <div class="card"><h2>Constraints on the property</h2>
+    ${area("site.encumbrances","Easements, covenants, rights of way, zoning, riparian, health orders",{ph:"From title search and site visit"})}
+    ${inp("site.boundaries","Legal boundaries confirmed by",{ph:"e.g. Survey pins at NW and SW corners"})}
+    ${area("site.services","Buried services located",{ph:"Water, hydro, gas, phone, drains"})}
+    ${inp("site.climate","Special climate or soil factors",{ph:"e.g. Frost, high rainfall"})}
+  </div>
+  <div class="card"><h2>System location</h2>
+    ${inp("site.proposedArea","Proposed dispersal area",{ph:"Where on the lot"})}
+    ${inp("site.existing","Existing sewerage system",{ph:"None / describe"})}
+  </div>`},
+
+pits(){const s=cur();setBar("Test pits",s.prop.address,true);setActions(`<button class="btn primary" data-act="addpit">${IC.plus} Add test pit</button>`);
+  const items=s.pits.map(p=>{const lim=pitLimiting(p);return`<button class="navitem" data-act="openpit" data-id="${p.id}">${dot(p.layers.length&&p.shwt!==""&&p.wtObserved!==""?2:p.layers.length?1:0)}<div class="t"><b>${esc(p.name)}</b><span>${p.layers.length} layer${p.layers.length===1?"":"s"} · limiting ${fmt(lim)} cm${p.location?" · "+esc(p.location):""}</span></div>${IC.chev}</button>`}).join("");
+  return`<p class="hint">Log each test pit in the proposed dispersal area. Dig deep enough to confirm vertical separation for the planned system.</p><div class="navlist">${items}</div>`},
+
+pit(){const s=cur();const p=pitById(s,view.pitId);if(!p)return VIEWS.pits();const base=`pits.${p.id}`;
+  setBar(p.name+" – Profile log",s.prop.address,true);
+  setActions(`<button class="btn primary" data-act="addlayer">${IC.plus} Add layer</button>`);
+  const layers=p.layers.map((l,i)=>`<button class="navitem" data-act="openlayer" data-id="${l.id}"><span class="layer-head" style="flex:none"><span class="swatch" style="background:${colourHex(l.colour)}"></span></span><div class="t"><b class="mono">${esc(l.from||"?")}–${esc(l.to||"?")} cm</b><span>${esc([l.texture,l.type&&(l.grade!==""?l.grade+" ":"")+l.type,l.cons,l.cfPct&&l.cfPct+"% CF"].filter(Boolean).join(" · ")||"Tap to describe")}</span></div>${IC.chev}</button>`).join("");
+  return`<div class="card"><div class="pitwrap"><div data-calc="profile"></div>
+     <div class="legend"><span><i style="border-top:2.5px dashed var(--water)"></i>SHWT / water</span><span><i style="border-top:2.5px solid var(--bad)"></i>Restrictive layer</span><span class="mono" data-calc="pitlim"></span></div></div></div>
+  <div class="card"><h2>Layers (horizons)</h2>${layers?`<div class="navlist">${layers}</div>`:`<p class="hint">No layers yet. Tap “Add layer” and start from the surface (0 cm).</p>`}</div>
+  <div class="card"><h2>Water &amp; limiting layers</h2>
+    ${chips(base+".wtObserved","Water table seen on date of investigation?",["Yes","No"],{noOther:true})}
+    <div ${p.wtObserved==="Yes"?"":"hidden"} data-show="wt">${inp(base+".wtDepth","Depth to water",{unit:"cm",num:true})}</div>
+    <div class="row">${inp(base+".shwt","Estimated SHWT",{unit:"cm",num:true})}${sel(base+".shwtBasis","Based on",["Mottles","Gleying","Observed water","Staining","Seasonal indicators","None observed"])}</div>
+    <div class="row">${inp(base+".rlType","Restrictive layer type",{ph:"e.g. Dense till, bedrock, clay"})}${inp(base+".rlDepth","Depth to restrictive",{unit:"cm",num:true})}</div>
+    ${inp(base+".limiting","Usable soil depth to limiting layer",{unit:"cm",num:true,ph:"Leave blank to use the shallowest of SHWT / restrictive"})}
+  </div>
+  <div class="card"><h2>Pit details</h2>
+    <div class="row">${inp(base+".name","Pit name")}${inp(base+".depth","Total pit depth",{unit:"cm",num:true})}</div>
+    ${inp(base+".location","Location",{ph:"e.g. Centre of proposed field"})}
+    ${area(base+".notes","Notes")}
+    <button class="btn danger" data-act="delpit">${IC.trash} Delete ${esc(p.name)}</button>
+  </div>`},
+
+layer(){const s=cur();const p=pitById(s,view.pitId);const l=p&&p.layers.find(x=>x.id===view.layerId);if(!l)return VIEWS.pit();
+  const b=`pits.${p.id}.layers.${l.id}`;const idx=p.layers.indexOf(l);
+  setBar(`${p.name} · Layer ${idx+1}`,`${l.from||"?"}–${l.to||"?"} cm`,true);
+  setActions(`<button class="btn" data-act="back">Done</button><button class="btn primary" data-act="nextlayer">${IC.plus} Next layer</button>`);
+  return`<div class="card"><h2>Depth</h2><div class="row">${inp(b+".from","From",{unit:"cm",num:true})}${inp(b+".to","To",{unit:"cm",num:true})}</div></div>
+  <div class="card"><h2>Texture &amp; colour</h2>
+    ${sel(b+".texture","Texture (USDA)",TEXTURES)}
+    ${chips(b+".colour","Matrix colour",COLOURS.map(c=>c[0]),{swatch:colourHex})}
+  </div>
+  <div class="card"><h2>Structure</h2>
+    ${chips(b+".grade","Grade",GRADES)}
+    ${sel(b+".type","Type",TYPES)}
+    ${sel(b+".cons","Consistence",CONS,{groups:true,ph:"Choose moist, dry or cemented…"})}
+  </div>
+  <div class="card"><h2>Other properties</h2>
+    <div class="row">${inp(b+".cfPct","Coarse fragments",{unit:"%",num:true})}${sel(b+".cfKind","Kind",CF_KIND)}</div>
+    ${chips(b+".roots","Roots",ROOTS)}
+    ${chips(b+".moisture","Moisture",MOIST)}
+    <div class="row">${inp(b+".mottDepth","Mottles / gleying at",{unit:"cm",num:true})}${inp(b+".mottQty","Mottle qty / size",{ph:"e.g. Common, fine"})}</div>
+    ${area(b+".notes","Notes (fill, odour, etc.)")}
+    <button class="btn danger" data-act="dellayer">${IC.trash} Delete this layer</button>
+  </div>`},
+
+perm(){const s=cur();const P=s.perm;setBar("Permeability",s.prop.address,true);
+  setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  const holes=P.holes.map(h=>{const c=holeCalc(P,h);return`<button class="navitem" data-act="openhole" data-id="${h.id}">${dot(isFinite(c.kfs)&&c.kfs>0?2:h.readings.some(r=>r!=="")?1:0)}<div class="t"><b>Borehole ${esc(h.name)}</b><span>${isFinite(c.kfs)?`K<sub>fs</sub> ${fmt(c.kfs)} mm/d · ${fmt(c.avg,2)} mm/min`:"No readings yet"}${h.pit?" · near "+esc(h.pit):""}</span></div>${IC.chev}</button>`}).join("");
+  return`<div class="figs"><div class="fig"><span class="k">Average K<sub>fs</sub> for design</span><span class="v" data-calc="kfsavg"></span></div><div class="fig"><span class="k">Boreholes used</span><span class="v" data-calc="kfsn"></span></div></div>
+  <div class="card"><h2>Constant head boreholes</h2><p class="hint">SPM minimum is 4 tests at the planned infiltrative depth, or 6 if the soil is firm or platy.</p><div class="navlist">${holes}</div>
+   <button class="btn" data-act="addhole">${IC.plus} Add borehole</button></div>
+  <div class="card"><h2>Test setup</h2>
+    ${chips("perm.F","Soil factor (F)",SOIL_F.map(([v,t])=>[v,`${v} · ${t}`]))}
+    <div class="row">${inp("perm.idIn","Permeameter ID",{unit:"in",num:true})}${inp("perm.air","Air hole height",{unit:"cm",num:true})}</div>
+    <div class="row">${inp("perm.auger","Auger diameter",{unit:"cm",num:true})}${inp("perm.holeDepth","Auger hole depth",{unit:"cm",num:true})}</div>
+    ${inp("perm.finDia","Finished hole diameter",{unit:"cm",num:true})}
+    <p class="hint mono" data-calc="permarea"></p>
+  </div>`},
+
+hole(){const s=cur();const P=s.perm;const h=P.holes.find(x=>x.id===view.holeId);if(!h)return VIEWS.perm();const b=`perm.holes.${h.id}`;
+  setBar("Borehole "+h.name,s.prop.address,true);
+  setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  const rows=h.readings.map((r,i)=>`<tr class="${h.excl.includes(i)?"excl":""}" data-row="${i}"><td class="min">${i}</td><td>${inp(`${b}.readings.${i}`,"",{num:true,ph:i===0?"Start level":"",aria:`Reading at minute ${i}, mm`})}</td><td class="rate" data-calc="rate" data-i="${i}"></td><td class="use">${i>0?`<button class="tog" data-act="excl" data-i="${i}" aria-pressed="${!h.excl.includes(i)}" aria-label="Use minute ${i} in average">${h.excl.includes(i)?"Skip":"Use"}</button>`:""}</td></tr>`).join("");
+  return`<div class="figs"><div class="fig"><span class="k">Avg stable rate</span><span class="v" data-calc="havg"></span></div><div class="fig"><span class="k">K<sub>fs</sub></span><span class="v" data-calc="hkfs"></span></div></div>
+  <div class="timer"><span class="clock" id="clock" aria-live="off">0:00</span><button class="btn sm primary" data-act="timer" id="timerbtn">${IC.timer} Start timer</button></div>
+  <div class="card"><h2>Readings</h2><p class="hint">Enter the reservoir level in mm each minute. Tap “Use” to leave an unstable reading out of the average.</p>
+   <div style="overflow-x:auto"><table class="readings"><thead><tr><th>Min</th><th>Reading (mm)</th><th style="text-align:right">Fall mm/min</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+   <button class="btn sm" data-act="addmin">${IC.plus} Add minute</button></div>
+  <div class="card"><h2>Location</h2>
+    <div class="row">${inp(b+".name","Borehole #")}${sel(b+".pit","Nearest test pit",s.pits.map(p=>p.name))}</div>
+    ${inp(b+".location","Location",{ph:"e.g. NW corner of field"})}
+    <button class="btn danger" data-act="delhole">${IC.trash} Delete borehole</button>
+  </div>`},
+
+perc(){const s=cur();setBar("Percolation tests",s.prop.address,true);setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  const tests=s.perc.tests.map((t,i)=>`<div class="layer"><div class="layer-head"><b>Test ${i+1}</b><span class="mono" data-calc="perclow" data-i="${i}"></span></div>
+    ${inp(`perc.tests.${i}.depth`,"Depth of hole base",{unit:"cm",num:true})}
+    <div class="field"><span class="lbl">Timings <span class="unit">(min per inch)</span></span><div class="row">${t.t.map((x,j)=>`<div style="flex:1 1 72px">${inp(`perc.tests.${i}.t.${j}`,"",{num:true,ph:"#"+(j+1),aria:`Test ${i+1} timing ${j+1}`})}</div>`).join("")}</div></div></div>`).join("");
+  return`<div class="figs"><div class="fig"><span class="k">Perc rate for sizing</span><span class="v" data-calc="percavg"></span></div></div>
+  <div class="card"><h2>Tests</h2><p class="hint">The lowest timing for each test is used. The sizing rate is the average of those.</p>${tests}
+  <button class="btn" data-act="addperc">${IC.plus} Add test</button></div>`},
+
+sb(){const s=cur();setBar("Setbacks",s.prop.address,true);setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  const grp=(g,L,title)=>`<div class="card"><h2>${title}</h2><div class="sb"><span class="hdr">Feature · SPM min.</span><span class="hdr r">Measured (m)</span><span class="hdr r">Status</span>
+    ${L.map(([k,name,spm])=>{const na=!!s.setbacks.na[g+"_"+k];return`<span class="name">${esc(name)}<small>min ${spm} m</small></span>
+      <span>${na?`<button class="tog" style="width:100%" data-act="sbna" data-k="${g}_${k}" aria-pressed="true">None</button>`:inp(`setbacks.${g}.${k}`,"",{num:true,aria:name+" measured distance"})}</span>
+      <span class="st" data-calc="sb" data-g="${g}" data-k="${k}" data-spm="${spm}"></span>`}).join("")}</div>
+    <p class="hint">Tap a status to mark the feature as not present.</p></div>`;
+  return`${grp("da",SB_DA,"From discharge area")}${grp("tk",SB_TK,"From tanks, sewers &amp; pipes")}
+  <div class="card">${area("setbacks.comments","Comments",{ph:"How distances were measured, features on neighbouring lots"})}</div>`},
+
+photos(){const s=cur();setBar("Photos",s.prop.address,true);
+  setActions(`<label class="btn primary" style="cursor:pointer">${IC.cam} Add photo<input type="file" accept="image/*" capture="environment" id="photoin" multiple hidden></label>`);
+  return s.photos.length?`<div class="photos">${s.photos.map((ph,i)=>`<div class="photo"><img data-thumb="${ph.id}" src="${THUMBS.get(ph.id)||""}" alt="${esc(ph.caption||"Site photo "+(i+1))}"><span class="hint mono" style="font-size:12px">${esc(photoGeo(ph)||"No location recorded")}</span>${inp(`photos.${ph.id}.caption`,"",{ph:"Caption",aria:"Photo caption"})}${sel(`photos.${ph.id}.pit`,"",s.pits.map(p=>p.name),{ph:"Link to test pit…",noOther:true})}<button class="btn sm danger" data-act="delphoto" data-id="${ph.id}">Remove</button></div>`).join("")}</div>`
+   :`<div class="card center"><h2>No photos yet</h2><p class="hint">Photograph each test pit profile with a tape for scale, plus the proposed dispersal area.</p></div>`},
+
+exp(){const s=cur();setBar("Export & email",s.prop.address,true);setActions(`<button class="btn primary" data-act="doexport" id="dobtn">${IC.send} Create file &amp; send</button>`);
+  const f=S.settings.format||"xlsx";const sum=siteSummary(s);
+  return`<div class="card"><h2>File type</h2>
+    <div class="chips" role="group" aria-label="File type"><button class="chip" data-act="fmt" data-val="xlsx" aria-pressed="${f==="xlsx"}">Excel (.xlsx)</button><button class="chip" data-act="fmt" data-val="docx" aria-pressed="${f==="docx"}">Word (.docx)</button><button class="chip" data-act="fmt" data-val="pdf" aria-pressed="${f==="pdf"}">PDF</button></div>
+    <p class="hint">${f==="xlsx"?"Excel gives one tab per section (Site & Soil, A1 Test Pits, A2 Permeability, A2 Percolation, T2 Setbacks, Photos) plus a Field Data tab for importing into a design workbook.":f==="pdf"?"PDF gives a finished, read-only report with appendices and photos, ready to send to a client or health authority.":"Word gives a formatted Site and Soil Evaluation report with appendices and photos that you can edit."}</p></div>
+  <div class="card"><h2>Send to</h2>
+    <div class="field"><label for="sendto">Email address</label><input id="sendto" type="email" value="${esc(S.settings.email)}" placeholder="you@company.com" data-setting="email"></div>
+    <p class="hint">When the file is ready your phone's share menu opens. Choose Mail (or Gmail / Outlook), check the address and tap Send.</p></div>
+  <div class="card"><h3>Check before sending</h3>
+    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px">
+      <li>${s.pits.length} test pit${s.pits.length===1?"":"s"}, ${s.pits.reduce((a,p)=>a+p.layers.length,0)} layers</li>
+      <li>${sum.perm.n} permeability test${sum.perm.n===1?"":"s"}${sum.perm.n<4?' <span class="pill bad">SPM asks for 4+</span>':""}</li>
+      <li>Setbacks: ${sum.sb.bad?`<span class="pill bad">${sum.sb.bad} below minimum</span>`:`${sum.sb.ok} OK, ${sum.sb.blank} blank`}</li>
+      <li>${s.photos.length} photo${s.photos.length===1?"":"s"}</li>
+    </ul></div>
+  <p class="hint" id="exstatus" aria-live="polite"></p>`},
+
+termsgate(){setBar("Terms of Use","Please read and agree to continue",false);
+  setActions(`<button class="btn" data-act="termsno">Don't agree</button><button class="btn primary" data-act="termsyes" id="termsyes" disabled>I agree</button>`);
+  const again=S.settings.terms&&S.settings.terms.version!==TERMS_VERSION;
+  return`${DROP_SVG.replace('class="drop"','class="drop" style="width:48px;align-self:center"')}
+  ${again?`<div class="note">The Terms of Use have changed. Please read and agree to the new version (${TERMS_VERSION}).</div>`:""}
+  <div class="card"><h2>In plain words</h2>${TERMS_SUMMARY}</div>
+  <div class="card"><h2>Full terms</h2><div class="terms-box" tabindex="0" aria-label="Full Terms of Use">${termsHtml()}</div></div>
+  <div class="card">
+    <label class="agree"><input type="checkbox" id="tc1"><span>I have read and agree to the Terms of Use, including the limitation of liability, release and indemnity.</span></label>
+    <label class="agree"><input type="checkbox" id="tc2"><span>I'm using this app for work, and I or a qualified Authorized Person will verify all data before relying on it.</span></label>
+    <p class="hint" id="termsmsg" aria-live="polite"></p>
+  </div>`},
+
+terms(){setBar("Terms of Use","Version "+TERMS_VERSION,true);setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  const a=S.settings.terms;
+  return`${a?`<div class="note" style="border-left-color:var(--ok);background:var(--ok-soft)">You agreed to version ${esc(a.version)} on ${esc(a.at)}.</div>`:""}<div class="card"><h2>In plain words</h2>${TERMS_SUMMARY}</div><div class="card"><h2>Full terms</h2><div class="terms-box" style="max-height:none">${termsHtml()}</div></div>`},
+
+settings(){setBar("Settings","Shown on exported reports",true);setActions(`<button class="btn primary" data-act="back">Done</button>`);
+  const st=S.settings;const f=(k,l,t="text",ph="")=>`<div class="field"><label for="st_${k}">${l}</label><input id="st_${k}" type="${t}" data-setting="${k}" value="${esc(st[k])}" placeholder="${esc(ph)}" autocomplete="off"></div>`;
+  return`<div class="card"><h2>You</h2>${f("name","Your name","text","Jane Smith, P.Eng.")}<div class="row">${f("reg","ROWP / P.Eng. no.","text","")}${f("phone","Phone","tel")}</div>${f("email","Email (exports go here)","email","you@company.com")}</div>
+  <div class="card"><h2>Company</h2>${f("company","Company name","text","Your company")}
+    <div class="field"><span class="lbl">Logo</span>${st.logo?`<img src="${st.logo}" alt="Company logo" style="max-height:80px;width:auto;align-self:flex-start;border:1px solid var(--line);border-radius:6px;padding:6px;background:#fff">`:""}
+    <div class="row"><label class="btn" style="cursor:pointer">Choose logo image<input type="file" accept="image/*" id="logoin" hidden></label>${st.logo?`<button class="btn danger" data-act="dellogo">Remove logo</button>`:""}</div></div></div>
+  <div class="card"><h2>Reports</h2><div class="field"><span class="lbl">Show GPS and time under photos</span><div class="chips" role="group" aria-label="Show GPS and time under photos">${["Yes","No"].map(x=>`<button class="chip" data-act="photogps" data-val="${x}" aria-pressed="${(st.photoGps||"Yes")===x}">${x}</button>`).join("")}</div></div>
+    <p class="hint">Your logo and company name appear at the top of every Excel, Word and PDF export.</p></div>
+  <div class="card"><h2>Display</h2><div class="chips" role="group" aria-label="Theme">${[["","Match phone"],["light","Light"],["dark","Dark"]].map(([v,t])=>`<button class="chip" data-act="theme" data-val="${v}" aria-pressed="${(st.theme||"")===v}">${t}</button>`).join("")}</div></div>
+  <button class="navitem" style="border:1px solid var(--line);border-radius:var(--r);background:var(--surface)" data-act="showterms"><div class="t"><b>Terms of Use</b><span>${termsAccepted()?"Agreed "+esc(S.settings.terms.at)+" · version "+TERMS_VERSION:"Not yet agreed"}</span></div>${IC.chev}</button>
+  <p class="foot">Site &amp; Soil Field Log · prototype 0.4<br>All data stays on this device until you export it.</p>`}
+};
+
+
+/* ============================================================
+   Terms of Use (draft for legal review)
+   ============================================================ */
+const TERMS_VERSION="1.0-draft";
+const TERMS_MD="**SITE & SOIL FIELD LOG \u2013 TERMS OF USE**\n\nVersion 1.0 (draft for legal review) \u00b7 Effective [date]\n\nThese Terms of Use (the \"Terms\") are a legal agreement between you and Beaty Hydro Corporation, a British Columbia company carrying on business as West Coast Septic (\"we\", \"us\" or \"our\"). They govern your use of the Site & Soil Field Log application, including its website, software, calculations, reference information, templates and exported files (together, the \"App\").\n\n**PLEASE READ THESE TERMS CAREFULLY. THEY LIMIT OUR LIABILITY, REQUIRE YOU TO VERIFY ALL DATA AND RESULTS, AND REQUIRE YOU TO INDEMNIFY US. IF YOU DO NOT AGREE, DO NOT USE THE APP.**\n\n### 1. Acceptance\n\n1.1 By ticking the acceptance box, tapping \"I agree\" or using the App, you agree to these Terms. If you use the App for a company or other organization, you agree on its behalf and confirm you have authority to bind it. In that case, \"you\" includes that organization.\n\n1.2 You confirm that you are at least the age of majority in your province or territory and that you are using the App in the course of a trade, business or profession and not for personal, family or household purposes.\n\n### 2. What the App is, and what it is not\n\n2.1 The App is a field data recording tool. It helps you record observations, measurements, photographs and locations, performs simple arithmetic on the values you enter, and arranges that information into files.\n\n2.2 The App does not provide engineering, geoscience, planning, legal or any other professional advice or services. It does not assess, evaluate, design, approve, certify or warrant any site, soil, sewerage system, setback or regulatory filing. Nothing in the App, and no output of the App, is a professional opinion or a design.\n\n2.3 Use of the App does not create any professional, fiduciary, agency, partnership or advisory relationship between you and us.\n\n2.4 References in the App to the BC *Sewerage System Standard Practice Manual* (\"SPM\"), the *Sewerage System Regulation* (\"SSR\"), health authority requirements or other standards are provided for convenience only. They may be incomplete, simplified, out of date or wrong. The App is not produced, reviewed or endorsed by the BC Ministry of Health, any health authority, ASTTBC, Engineers and Geoscientists BC or any other regulator.\n\n### 3. Your responsibilities\n\n3.1 You are solely responsible for every use you make of the App and of any data, calculation, file or report created with it (\"Your Data\").\n\n3.2 You must independently check and verify all of Your Data, including every observation, measurement, soil description, calculation (including hydraulic conductivity, percolation rates and limiting layer depths), setback, reference value and exported file, against the current SPM, the SSR, applicable bylaws, health authority requirements and sound professional practice, before relying on it for any purpose.\n\n3.3 You confirm that you are, or that Your Data will be reviewed and relied on only by, an appropriately qualified and authorized person (such as an Authorized Person under the SSR, a registered onsite wastewater practitioner, or a professional engineer or geoscientist), who will exercise their own independent professional judgment.\n\n3.4 You are solely responsible for all site work, safety, excavation, test pit and borehole work, regulatory filings, designs, installations, client communications and decisions, whether or not the App was used.\n\n3.5 You will not use the App for any unlawful purpose or in breach of any professional obligation.\n\n### 4. Errors, omissions and changes\n\n4.1 The App, including its software, calculations, formulas, pick lists, default values, reference tables, templates and exported files, may contain errors, omissions, defects, inaccuracies and out-of-date information. It may produce incorrect results even when used correctly.\n\n4.2 We are under no obligation to find or correct errors, to update the App when the SPM, SSR or other standards change, or to tell you about any error or change.\n\n4.3 Calculations in the App are simplified and are provided only as a convenience. They are not a substitute for your own calculations and professional judgment.\n\n### 5. No warranty\n\n5.1 THE APP AND ALL OUTPUT ARE PROVIDED \"AS IS\" AND \"AS AVAILABLE\", WITH ALL FAULTS AND WITHOUT WARRANTY OR CONDITION OF ANY KIND. TO THE FULLEST EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, CONDITIONS AND REPRESENTATIONS, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, INCLUDING ANY OF ACCURACY, COMPLETENESS, RELIABILITY, MERCHANTABILITY, MERCHANTABLE QUALITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AVAILABILITY, SECURITY, COMPATIBILITY OR FREEDOM FROM ERRORS OR VIRUSES, AND ANY ARISING FROM A COURSE OF DEALING OR USAGE OF TRADE.\n\n5.2 We do not warrant that the App will meet your requirements, comply with any standard or regulation, or keep Your Data safe from loss or corruption.\n\n### 6. Limitation of liability\n\n6.1 TO THE FULLEST EXTENT PERMITTED BY LAW, NEITHER WE NOR OUR DIRECTORS, OFFICERS, EMPLOYEES, CONTRACTORS, AGENTS, AFFILIATES, SUCCESSORS OR ASSIGNS (THE \"PROTECTED PARTIES\") WILL BE LIABLE TO YOU OR ANYONE ELSE FOR ANY LOSS, DAMAGE, COST, EXPENSE, CLAIM, FINE OR PENALTY OF ANY KIND ARISING OUT OF OR RELATING TO THE APP, YOUR DATA OR THESE TERMS. THIS INCLUDES DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY AND PUNITIVE DAMAGES, AND DAMAGES FOR: PROPERTY DAMAGE; SYSTEM FAILURE, MALFUNCTION, REDESIGN, REPAIR OR REPLACEMENT; ENVIRONMENTAL CONTAMINATION; PERSONAL INJURY, ILLNESS OR DEATH; PERMIT REFUSALS, ORDERS, FINES OR REGULATORY ACTION; LOSS OF DATA; LOSS OF PROFIT, REVENUE, BUSINESS, CONTRACTS OR GOODWILL; AND PROFESSIONAL DISCIPLINE OR CLAIMS BY YOUR CLIENTS.\n\n6.2 SECTION 6.1 APPLIES WHATEVER THE CAUSE OR LEGAL THEORY, INCLUDING CONTRACT, TORT (INCLUDING NEGLIGENCE AND NEGLIGENT MISREPRESENTATION), STRICT LIABILITY, STATUTE OR OTHERWISE, AND EVEN IF THE LOSS ARISES FROM AN ERROR, OMISSION, DEFECT OR INACCURACY IN THE APP, OR WE WERE TOLD THE LOSS WAS POSSIBLE.\n\n6.3 IF ANY PROTECTED PARTY IS FOUND LIABLE DESPITE THESE TERMS, THE TOTAL LIABILITY OF ALL PROTECTED PARTIES TOGETHER FOR ALL CLAIMS WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID US FOR THE APP IN THE 12 MONTHS BEFORE THE CLAIM AROSE AND (B) ONE HUNDRED CANADIAN DOLLARS (CAD $100).\n\n6.4 Nothing in these Terms excludes or limits liability that cannot be excluded or limited under applicable law. In that case, our liability is limited to the smallest extent permitted.\n\n### 7. Release and covenant not to sue\n\n7.1 To the fullest extent permitted by law, you release and forever discharge the Protected Parties from all claims, demands, actions and liabilities, known or unknown, arising out of or relating to the App or Your Data, including any arising from errors or omissions in the App.\n\n7.2 You agree not to start or take part in any lawsuit, arbitration, complaint or other proceeding against any Protected Party concerning a matter released under section 7.1, except to enforce these Terms.\n\n### 8. Indemnity\n\n8.1 You will defend, indemnify and hold harmless the Protected Parties from and against all claims, demands, actions, losses, damages, fines, penalties, costs and expenses (including reasonable legal fees on a full-indemnity basis) brought by any third party (including your clients, property owners, installers, health authorities, regulators and professional bodies) arising out of or relating to: (a) your use of the App; (b) Your Data or any design, report, filing, installation or decision that relied on it; (c) your breach of these Terms; or (d) your breach of any law or professional obligation.\n\n### 9. Your Data, privacy and backups\n\n9.1 The App stores Your Data only on your device. We do not collect, receive, store, back up or have access to Your Data, except for any information you choose to send us directly.\n\n9.2 You are solely responsible for keeping your device secure and for exporting and keeping copies of Your Data. Your Data may be permanently lost if you clear your browser or app data, delete or update the App, change or lose your device, or for any other reason. We are not responsible for any loss of Your Data.\n\n9.3 Your Data may include personal information about other people, such as client names, contact details, property addresses, GPS locations and photographs. You are solely responsible for complying with privacy laws, including BC's *Personal Information Protection Act*, and for getting any consent required to collect, use and share that information.\n\n9.4 Our handling of any personal information about you is described in our Privacy Policy at [link].\n\n### 10. Third-party services\n\n10.1 The App may display or link to services we do not control, such as map tiles from OpenStreetMap, directions from Google Maps, and your device's email, file-sharing and location services. Your use of them is subject to their own terms. We are not responsible for them, their availability or their content.\n\n### 11. Licence and intellectual property\n\n11.1 We grant you a limited, non-exclusive, non-transferable, revocable licence to use the App for your own professional purposes in line with these Terms. We and our licensors keep all rights in the App. You may not copy, modify, resell, reverse engineer or redistribute the App, except where the law allows you to despite this restriction.\n\n11.2 You own Your Data. You keep all rights in the reports and files you create, subject to the rights of any third party whose information they contain.\n\n### 12. Changes, suspension and termination\n\n12.1 We may change, suspend or withdraw the App or any part of it at any time, without notice or liability.\n\n12.2 We may change these Terms by publishing a new version in the App. If the change is material, we will ask you to accept the new version before you continue using the App. If you do not accept, you must stop using the App.\n\n12.3 We may end your licence at any time if you breach these Terms. Sections 2 to 10 and 13 survive the end of these Terms or of your use of the App.\n\n### 13. General\n\n13.1 **Governing law.** These Terms are governed by the laws of British Columbia and the federal laws of Canada that apply there. You agree to the exclusive jurisdiction of the courts of British Columbia, sitting in [Vancouver], for any dispute about the App or these Terms.\n\n13.2 **Severability.** If a court finds any part of these Terms invalid or unenforceable, that part will be limited or removed to the minimum extent necessary, and the rest of these Terms will remain in full force.\n\n13.3 **Entire agreement.** These Terms, together with the Privacy Policy, are the entire agreement between you and us about the App and replace any earlier statements or understandings.\n\n13.4 **No waiver.** If we do not enforce a right, that is not a waiver of it.\n\n13.5 **Assignment.** You may not assign these Terms. We may assign them without your consent, including as part of a sale or reorganization.\n\n13.6 **Language.** The parties have required that these Terms be drawn up in English.\n\n13.7 **Contact.** Beaty Hydro Corporation, [mailing address], [email].\n";
+function termsHtml(){return TERMS_MD.split(/\n\n+/).map(b=>{let h=esc(b).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"<i>$1</i>");return b.startsWith("### ")?`<h4>${h.slice(4)}</h4>`:`<p>${h}</p>`}).join("")}
+function termsAccepted(){const a=S.settings.terms;return a&&a.version===TERMS_VERSION}
+const TERMS_SUMMARY=`<ul class="terms-sum"><li>This app <b>records field data only</b>. It is not engineering advice, an assessment or a design.</li><li><b>You must check everything</b>, including entries, calculations, setbacks and SPM values, before relying on it.</li><li>The app <b>may contain errors or omissions</b> and is provided “as is”.</li><li><b>We are not liable</b> for any loss from using the app or its data, and you agree not to sue us and to cover us if others do.</li><li>Your data <b>stays on this device</b>. Export and keep your own copies.</li></ul>`;
+/* ============================================================
+   Live calculated bits (updated without re-rendering inputs)
+   ============================================================ */
+function refreshCalcs(){const s=cur();if(!s)return;
+  document.querySelectorAll("[data-calc]").forEach(el=>{const k=el.dataset.calc;
+    if(k==="profile"){const p=pitById(s,view.pitId);el.innerHTML=profileSvg(p)}
+    else if(k==="pitlim"){const p=pitById(s,view.pitId);el.textContent="Limiting: "+fmt(pitLimiting(p))+" cm"}
+    else if(k==="kfsavg"){el.innerHTML=`${fmt(permSummary(s).avg)} <small>mm/d</small>`}
+    else if(k==="kfsn"){el.textContent=permSummary(s).n}
+    else if(k==="permarea"){el.textContent=`Permeameter area ${fmt(permArea(s.perm),2)} cm²`}
+    else if(k==="rate"||k==="havg"||k==="hkfs"){const h=s.perm.holes.find(x=>x.id===view.holeId);if(!h)return;const c=holeCalc(s.perm,h);
+      if(k==="rate"){const v=c.rates[+el.dataset.i];el.textContent=isFinite(v)?v.toFixed(1):""}
+      if(k==="havg")el.innerHTML=`${fmt(c.avg,2)} <small>mm/min</small>`;if(k==="hkfs")el.innerHTML=`${fmt(c.kfs)} <small>mm/d</small>`}
+    else if(k==="perclow"){const v=percCalc(s.perc.tests[+el.dataset.i]);el.textContent=isFinite(v)?`Lowest ${fmt(v,1)} min/in`:""}
+    else if(k==="percavg"){el.innerHTML=`${fmt(percSummary(s).avg,1)} <small>min/in</small>`}
+    else if(k==="sb"){const st=sbStatus(s,el.dataset.g,el.dataset.k,+el.dataset.spm);
+      el.innerHTML=`<button class="pill ${st==="ok"?"ok":st==="bad"?"bad":"na"}" style="border:0" data-act="sbna" data-k="${el.dataset.g}_${el.dataset.k}">${st==="ok"?"OK":st==="bad"?"Short":st==="na"?"N/A":"—"}</button>`}
+  })}
+
+function profileSvg(p){if(!p)return"";const depth=Math.max(num(p.depth)||0,...p.layers.map(l=>num(l.to)).filter(isFinite),100);
+  const H=Math.min(340,Math.max(200,depth*1.6));const y=d=>(d/depth)*H;
+  const lyr=p.layers.map(l=>{const a=num(l.from),b=num(l.to);if(!isFinite(a)||!isFinite(b)||b<=a)return"";const c=colourHex(l.colour);
+    return`<div class="lyr ${isDark(c)?"dk":""}" style="top:${y(a)}px;height:${y(b)-y(a)}px;background:${c==="transparent"?"var(--surface)":c}">${b-a>=12?esc((l.texture||"").split(" ").map(w=>w[0]).join("").toUpperCase()):""}</div>`}).join("");
+  const m=[];if(isFinite(num(p.shwt)))m.push(`<div class="mark" style="top:${y(num(p.shwt))}px" title="SHWT"></div>`);
+  if(p.wtObserved==="Yes"&&isFinite(num(p.wtDepth)))m.push(`<div class="mark" style="top:${y(num(p.wtDepth))}px;border-top-style:solid"></div>`);
+  if(isFinite(num(p.rlDepth)))m.push(`<div class="mark rl" style="top:${y(num(p.rlDepth))}px"></div>`);
+  const ticks=[];const step=depth>200?50:25;for(let d=0;d<=depth;d+=step)ticks.push(`<span style="position:absolute;top:${y(d)-7}px;right:0">${d}</span>`);
+  return`<div style="display:grid;grid-template-columns:30px 1fr;gap:6px" role="img" aria-label="Soil profile diagram for ${esc(p.name)}"><div class="ticks" style="height:${H}px">${ticks.join("")}</div><div class="profile" style="height:${H}px">${lyr}${m.join("")}</div></div>`}
+
+/* ============================================================
+   Events
+   ============================================================ */
+document.addEventListener("input",e=>{const t=e.target;
+  if(t.id==="dirq"){DIR.q=t.value;DIR.limit=0;renderDir();return}
+  if(t.dataset.bind&&t.tagName!=="SELECT"){setPath(t.dataset.bind,t.value);refreshCalcs()}
+  if(t.dataset.setting){S.settings[t.dataset.setting]=t.value;saveMeta()}});
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.id==="tc1"||t.id==="tc2"){const b=$("#termsyes");if(b)b.disabled=!($("#tc1").checked&&$("#tc2").checked);return}
+  if(t.id==="dirsort"){DIR.sort=t.value;renderDir();return}
+  if(t.tagName==="SELECT"&&t.dataset.bind){const path=t.dataset.bind;const oi=t.parentElement.querySelector(".other-in");
+    if(t.value==="__other"){OTHER.add(path);setPath(path,"");if(oi){oi.value="";oi.hidden=false;oi.focus()}}
+    else{OTHER.delete(path);setPath(path,t.value);if(oi){oi.value="";oi.hidden=true}}refreshCalcs()}
+  if(t.id==="photoin")addPhotos(t.files);
+  if(t.id==="logoin"&&t.files[0])resizeImage(t.files[0],600,0.9,"image/png").then(d=>{S.settings.logo=d;saveMeta();render()})});
+document.addEventListener("click",e=>{const chip=e.target.closest("[data-chip]");
+  if(chip){const path=chip.dataset.chip,val=chip.dataset.val;const v=getPath(path);const multi=Array.isArray(v);let focusOther=false;
+    if(val==="__other"){const on=chip.getAttribute("aria-pressed")==="true";
+      if(on){OTHER.delete(path);setPath(multi?path+"Other":path,"")}else{OTHER.add(path);if(!multi)setPath(path,"");focusOther=true}}
+    else if(multi){const i=v.indexOf(val);i>=0?v.splice(i,1):v.push(val);save()}
+    else{OTHER.delete(path);setPath(path,String(v)===val?"":val)}
+    const fld=chip.closest("[data-chipfield]");const d=CHIPDEF[path];if(fld&&d){fld.outerHTML=chips(path,d.label,d.options,d.opt);if(focusOther){const f=document.querySelector(`[data-chipfield="${CSS.escape(path)}"] .other-in`);f&&f.focus()}}
+    const show=document.querySelector('[data-show="wt"]');if(show&&path.endsWith(".wtObserved"))show.hidden=getPath(path)!=="Yes";
+    refreshCalcs();return}
+  const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;const s=cur();
+  const A={
+   back,settings:()=>go({name:"settings"}),
+   newsite:()=>{const n=newSite();n.prop.investigator=S.settings.name||"";S.sites.push(n);view.siteId=n.id;save();go({name:"prop",siteId:n.id})},
+   open:()=>go({name:"site",siteId:a.dataset.id}),
+   sec:()=>go({name:a.dataset.v,siteId:s.id}),
+   export:()=>go({name:"exp",siteId:s.id}),
+   delsite:()=>confirmSheet(`Delete “${s.prop.address||"Untitled site"}”?`,"This removes the site and its photos from this phone. Export it first if you need a copy.","Delete site",()=>{S.sites=S.sites.filter(x=>x!==s);store.del("site:"+s.id);s.photos.forEach(p=>{store.del("ph:"+p.id);store.del("th:"+p.id)});go({name:"home"});toast("Site deleted")}),
+   addpit:()=>{const p=newPit(s.pits.length+1);s.pits.push(p);save();go({name:"pit",siteId:s.id,pitId:p.id})},
+   openpit:()=>go({name:"pit",siteId:s.id,pitId:a.dataset.id}),
+   delpit:()=>{const p=pitById(s,view.pitId);confirmSheet(`Delete ${p.name}?`,`Its ${p.layers.length} layers will be removed.`,"Delete pit",()=>{s.pits=s.pits.filter(x=>x!==p);save();go({name:"pits",siteId:s.id})})},
+   addlayer:()=>{const p=pitById(s,view.pitId);const last=p.layers[p.layers.length-1];const l=newLayer(last?last.to:"0");p.layers.push(l);save();go({name:"layer",siteId:s.id,pitId:p.id,layerId:l.id})},
+   openlayer:()=>go({name:"layer",siteId:s.id,pitId:view.pitId,layerId:a.dataset.id}),
+   nextlayer:()=>{const p=pitById(s,view.pitId);const l=newLayer(p.layers.find(x=>x.id===view.layerId)?.to||"");p.layers.push(l);save();go({name:"layer",siteId:s.id,pitId:p.id,layerId:l.id});toast("Layer saved")},
+   dellayer:()=>{const p=pitById(s,view.pitId);p.layers=p.layers.filter(x=>x.id!==view.layerId);save();go({name:"pit",siteId:s.id,pitId:p.id});toast("Layer deleted")},
+   openhole:()=>go({name:"hole",siteId:s.id,holeId:a.dataset.id}),
+   addhole:()=>{const h=newHole(s.perm.holes.length+1);s.perm.holes.push(h);save();go({name:"hole",siteId:s.id,holeId:h.id})},
+   delhole:()=>{s.perm.holes=s.perm.holes.filter(x=>x.id!==view.holeId);save();go({name:"perm",siteId:s.id})},
+   addmin:()=>{const h=s.perm.holes.find(x=>x.id===view.holeId);h.readings.push("");save();render()},
+   excl:()=>{const h=s.perm.holes.find(x=>x.id===view.holeId);const i=+a.dataset.i;const k=h.excl.indexOf(i);k>=0?h.excl.splice(k,1):h.excl.push(i);save();
+     const on=!h.excl.includes(i);a.setAttribute("aria-pressed",on);a.textContent=on?"Use":"Skip";a.closest("tr").classList.toggle("excl",!on);refreshCalcs()},
+   timer:toggleTimer,
+   addperc:()=>{s.perc.tests.push({depth:"",t:["","","","","",""]});save();render()},
+   sbna:()=>{const k=a.dataset.k;s.setbacks.na[k]=!s.setbacks.na[k];save();render()},
+   gps:getGps,
+   delphoto:()=>{s.photos=s.photos.filter(x=>x.id!==a.dataset.id);store.del("ph:"+a.dataset.id);store.del("th:"+a.dataset.id);save();render()},
+   fmt:()=>{S.settings.format=a.dataset.val;saveMeta();render()},
+   termsyes:()=>{S.settings.terms={version:TERMS_VERSION,at:localStamp(new Date())};store.set("meta",{settings:S.settings,ver:2});go({name:"home"});toast("Thanks. You can read the terms any time in Settings.")},
+   termsno:()=>{$("#termsmsg").textContent="The app can't be used without agreeing to the Terms of Use. If you don't agree, close the app. Your data stays on this device."},
+   showterms:()=>go({name:"terms"}),
+   status:()=>{s.status=a.dataset.val;save();render()},
+   dirmode:()=>{DIR.mode=a.dataset.val;try{localStorage.setItem("ssfl_dirmode",DIR.mode)}catch(e){}render()},
+   dirstatus:()=>{DIR.status=a.dataset.val;renderDir()},
+   kml:exportKml,
+   nearme:mapNearMe,
+   delexamples:()=>confirmSheet("Remove the example sites?","Only sites marked Example are removed. Your own sites stay.","Remove examples",()=>{S.sites.filter(x=>x.example).forEach(x=>store.del("site:"+x.id));S.sites=S.sites.filter(x=>!x.example);render();toast("Examples removed")}),
+   photogps:()=>{S.settings.photoGps=a.dataset.val;saveMeta();render()},
+   theme:()=>{S.settings.theme=a.dataset.val;applyTheme();saveMeta();render()},
+   dellogo:()=>{S.settings.logo="";saveMeta();render()},
+   doexport:doExport};
+  if(A[act]){e.preventDefault();A[act]()}});
+
+function confirmSheet(title,body,okText,onOk){$("#overlay").innerHTML=`<div class="sheet-bg" data-close="1"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh_t"><h2 id="sh_t">${esc(title)}</h2><p class="hint">${esc(body)}</p><button class="btn danger block" id="sh_ok">${esc(okText)}</button><button class="btn block" id="sh_no">Cancel</button></div></div>`;
+  const close=()=>$("#overlay").innerHTML="";$("#sh_no").onclick=close;$("#sh_ok").onclick=()=>{close();onOk()};$(".sheet-bg").onclick=e=>{if(e.target.dataset.close)close()};$("#sh_ok").focus()}
+
+/* GPS */
+function getGps(){const s=cur();const hint=document.querySelector('[data-calc="gpsacc"]');
+  if(!navigator.geolocation){hint.textContent="Location isn't available on this device. Type the coordinates instead.";return}
+  hint.textContent="Getting your location…";
+  navigator.geolocation.getCurrentPosition(pos=>{s.prop.lat=pos.coords.latitude.toFixed(6);s.prop.lon=pos.coords.longitude.toFixed(6);s.prop.gpsAcc=Math.round(pos.coords.accuracy);save();render();toast("Location saved")},
+    err=>{hint.textContent=err.code===1?"Location permission was refused. Allow location for this app in your phone settings, or type the coordinates.":"Couldn't get a location fix. Try again in the open, or type the coordinates."},{enableHighAccuracy:true,timeout:20000,maximumAge:0})}
+
+/* Permeability minute timer */
+let timer=null;
+function toggleTimer(){const btn=$("#timerbtn");if(timer){clearInterval(timer.int);timer=null;btn.innerHTML=IC.timer+" Start timer";return}
+  const t0=Date.now();let lastMin=0;timer={int:setInterval(()=>{const sec=Math.floor((Date.now()-t0)/1000);const c=$("#clock");if(c)c.textContent=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+    const m=Math.floor(sec/60);if(m>lastMin){lastMin=m;try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}beep();const f=document.querySelector(`tr[data-row="${m}"] input`);if(f){f.focus();f.scrollIntoView({block:"center"})}}},250)};
+  btn.innerHTML="Stop timer";try{const f=document.querySelector('tr[data-row="0"] input');f&&f.focus()}catch(e){}}
+function stopTimerIfLeaving(){if(timer&&view.name!=="hole"){clearInterval(timer.int);timer=null}}
+let actx=null;function beep(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+.25)}catch(e){}}
+
+/* Photos */
+const THUMBS=new Map();
+async function fillThumbs(){for(const img of document.querySelectorAll("img[data-thumb]")){if(img.getAttribute("src"))continue;const id=img.dataset.thumb;let d=THUMBS.get(id);if(!d){d=await store.get("th:"+id)||await store.get("ph:"+id);if(d)THUMBS.set(id,d)}if(d)img.src=d}}
+async function withPhotos(s){if(!s.photos.length||s.photos.every(p=>p.data))return s;const photos=await Promise.all(s.photos.map(async p=>({...p,data:p.data||await store.get("ph:"+p.id)||THUMBS.get(p.id)||await store.get("th:"+p.id)})));return{...s,photos:photos.filter(p=>p.data)}}
+function resizeImage(file,max,q,type="image/jpeg"){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);const x=c.getContext("2d");if(type==="image/jpeg"){x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height)}x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL(type,q))};img.onerror=rej;img.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+function parseExif(buf){try{const d=new DataView(buf);if(d.getUint16(0)!==0xFFD8)return null;let o=2;
+  while(o<d.byteLength-4){const m=d.getUint16(o);if((m&0xFF00)!==0xFF00)return null;if(m===0xFFE1&&d.getUint32(o+4)===0x45786966)return readTiff(d,o+10);o+=2+d.getUint16(o+2)}}catch(e){}return null}
+function readTiff(d,t){const le=d.getUint16(t)===0x4949;const u16=p=>d.getUint16(p,le),u32=p=>d.getUint32(p,le);
+  const ifd=off=>{const n=u16(t+off);const g={};for(let i=0;i<n;i++){const e=t+off+2+i*12;g[u16(e)]={count:u32(e+4),vo:e+8}}return g};
+  const rat=p=>u32(p)/u32(p+4);const str=g=>{const p=g.count>4?t+u32(g.vo):g.vo;let s="";for(let i=0;i<g.count-1;i++)s+=String.fromCharCode(d.getUint8(p+i));return s};
+  const out={};const i0=ifd(u32(t+4));
+  if(i0[0x8769]){const ex=ifd(u32(i0[0x8769].vo));const tg=ex[0x9003]||ex[0x9004];if(tg){const m=str(tg).match(/(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d)/);if(m)out.time=`${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`}}
+  if(i0[0x8825]){const g=ifd(u32(i0[0x8825].vo));const dms=x=>{const p=t+u32(x.vo);return rat(p)+rat(p+8)/60+rat(p+16)/3600};
+    if(g[2]&&g[4]){let la=dms(g[2]),lo=dms(g[4]);if(g[1]&&String.fromCharCode(d.getUint8(g[1].vo))==="S")la=-la;if(g[3]&&String.fromCharCode(d.getUint8(g[3].vo))==="W")lo=-lo;if(isFinite(la)&&isFinite(lo)&&(la||lo)){out.lat=la;out.lon=lo}}}
+  return out}
+function currentPos(){return new Promise(res=>{if(!navigator.geolocation)return res(null);let done=false;const fin=v=>{if(!done){done=true;res(v)}};setTimeout(()=>fin(null),15000);
+  try{navigator.geolocation.getCurrentPosition(p=>fin(p.coords),()=>fin(null),{enableHighAccuracy:true,timeout:14000,maximumAge:60000})}catch(e){fin(null)}})}
+const localStamp=d=>{const z=n=>String(n).padStart(2,"0");return`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`};
+function photoGeo(ph){const parts=[];if(isFinite(ph.lat)&&ph.lat!==null&&ph.lat!=="")parts.push(`${(+ph.lat).toFixed(6)}, ${(+ph.lon).toFixed(6)}${ph.acc?" ±"+ph.acc+" m":""}`);if(ph.time)parts.push(ph.time);return parts.join(" · ")}
+function photoCaption(ph,i){const base=`Photo ${i+1}${ph.pit?" ("+ph.pit+")":""}: ${ph.caption||""}`.trim();const g=photoGeo(ph);return S.settings.photoGps!=="No"&&g?`${base}  [${g}]`:base}
+async function addPhotos(files){const s=cur();const list=[...files];if(!list.length)return;toast("Adding photo…");const posP=currentPos();
+  for(const f of list){try{let ex=null;try{ex=parseExif(await f.slice(0,262144).arrayBuffer())}catch(e){}
+    const d=await resizeImage(f,1600,0.78);const im=new Image();await new Promise(r=>{im.onload=r;im.src=d});
+    const th=await resizeImage(f,360,0.72);const ph={id:uid(),w:im.width,h:im.height,caption:"",pit:"",lat:"",lon:"",acc:"",time:(ex&&ex.time)||localStamp(new Date()),gpsSrc:""};
+    if(ex&&isFinite(ex.lat)){ph.lat=+ex.lat.toFixed(6);ph.lon=+ex.lon.toFixed(6);ph.gpsSrc="photo"}
+    else{const c=await posP;if(c){ph.lat=+c.latitude.toFixed(6);ph.lon=+c.longitude.toFixed(6);ph.acc=Math.round(c.accuracy);ph.gpsSrc="phone"}}
+    await store.set("ph:"+ph.id,d);await store.set("th:"+ph.id,th);THUMBS.set(ph.id,th);s.photos.push(ph)}catch(e){toast("That file couldn't be read as a photo")}}
+  save();render();const miss=s.photos.slice(-list.length).filter(p=>p.lat==="").length;
+  toast(miss?`Photo added. Location wasn't available${miss>1?" for "+miss:""}.`:(list.length>1?list.length+" photos added with location":"Photo added with location"))}
+
+/* Theme */
+function applyTheme(){const t=S.settings.theme;if(t)document.documentElement.setAttribute("data-theme",t);else document.documentElement.removeAttribute("data-theme")}
+
+
+/* ============================================================
+   Site directory: search, sort, status filter, list + map
+   ============================================================ */
+const STATUSES=["In progress","Sent","Complete"];
+let DIR={q:"",sort:"recent",status:"All",mode:"list"};try{DIR.mode=localStorage.getItem("ssfl_dirmode")||"list"}catch(e){}
+let MAP=null;
+const norm=x=>String(x??"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+function siteHay(s){const p=s.prop;return norm([p.address,p.client,p.contact,p.pid,p.legal,p.fileNo,p.date,p.investigator,p.email,p.phone,s.notes,s.site.proposedArea,s.status].join(" "))}
+function dirFiltered(){const words=norm(DIR.q).split(/\s+/).filter(Boolean);
+  let L=S.sites.filter(s=>(DIR.status==="All"||(s.status||"In progress")===DIR.status)&&words.every(w=>siteHay(s).includes(w)));
+  const by={recent:(a,b)=>b.updated-a.updated,date:(a,b)=>String(b.prop.date).localeCompare(String(a.prop.date)),address:(a,b)=>norm(a.prop.address.replace(/^example:\s*/i,"")).localeCompare(norm(b.prop.address.replace(/^example:\s*/i,""))),client:(a,b)=>norm(a.prop.client).localeCompare(norm(b.prop.client))}[DIR.sort];
+  return L.sort(by)}
+function siteRow(s){const sum=siteSummary(s);const st=s.status||"In progress";
+  const sub=[s.prop.client.replace(/^Example:\s*/,""),s.prop.date||"No date",s.prop.fileNo&&"#"+s.prop.fileNo,isFinite(sum.lim)&&"limiting "+fmt(sum.lim)+" cm"].filter(Boolean).join(" · ");
+  return`<button class="navitem" data-act="open" data-id="${s.id}"><div class="t"><b>${esc(s.prop.address||"Untitled site")}</b><span>${esc(sub)}</span></div>${s.example?'<span class="pill ex">Example</span>':st==="Sent"?'<span class="pill sent">Sent</span>':st==="Complete"?'<span class="pill ok">Complete</span>':""}${IC.chev}</button>`}
+function renderDir(){const box=$("#dirlist");if(!box)return;const L=dirFiltered();const total=S.sites.length;
+  const counts={All:total};STATUSES.forEach(x=>counts[x]=S.sites.filter(s=>(s.status||"In progress")===x).length);
+  $("#dirstat").innerHTML=["All",...STATUSES].map(x=>`<button class="chip" data-act="dirstatus" data-val="${x}" aria-pressed="${DIR.status===x}">${x} <span class="unit">${counts[x]}</span></button>`).join("");
+  const countTxt=L.length===total?`${total} site${total===1?"":"s"}`:`${L.length} of ${total} sites match`;
+  if(DIR.mode==="map"){const noGps=L.filter(s=>!isFinite(num(s.prop.lat))||!isFinite(num(s.prop.lon))).length;
+    if(MAP){MAP.remove();MAP=null}
+    box.innerHTML=`<div class="dircount"><span>${countTxt}${noGps?` · ${noGps} without a GPS point`:""}</span></div><div class="row" style="gap:8px"><button class="btn sm" data-act="nearme">${IC.pin} Near me</button><button class="btn sm" data-act="kml">Google Earth file (.kml)</button></div>
+      <div id="map" role="region" aria-label="Map of sites"></div><p class="hint" id="mapnote" aria-live="polite"></p>`;
+    drawMap(L);return}
+  if(MAP){MAP.remove();MAP=null}
+  if(!L.length){box.innerHTML=`<div class="dircount"><span>${countTxt}</span></div><div class="card center"><h2>${total?"No matches":"No sites yet"}</h2><p class="hint">${total?"Try fewer words, or clear the search and status filter.":"Tap “New site investigation” to start your first field log."}</p></div>`;return}
+  let html="",yr=null;const group=DIR.sort==="date"||DIR.sort==="recent";const shown=L.slice(0,DIR.limit||150);
+  const chunks=[];let curChunk=[];
+  shown.forEach(s=>{const y=group?(DIR.sort==="date"?(s.prop.date||"").slice(0,4)||"No date":new Date(s.updated).getFullYear()+""):null;
+    if(group&&y!==yr){if(curChunk.length)chunks.push([yr,curChunk]);curChunk=[];yr=y}curChunk.push(s)});if(curChunk.length)chunks.push([yr,curChunk]);
+  html=chunks.map(([y,c])=>`${group&&chunks.length>1?`<div class="yearhd">${esc(y)}</div>`:""}<div class="navlist">${c.map(siteRow).join("")}</div>`).join("");
+  box.innerHTML=`<div class="dircount"><span>${countTxt}</span></div><div style="display:flex;flex-direction:column;gap:12px">${html}</div>${L.length>shown.length?`<button class="btn block" id="dirmore">Show ${Math.min(150,L.length-shown.length)} more</button>`:""}`;
+  const more=$("#dirmore");if(more)more.onclick=()=>{DIR.limit=(DIR.limit||150)+150;renderDir()}}
+function drawMap(L){const note=$("#mapnote");if(!window.L){note.textContent="The map tool didn't load. Connect to the internet and reopen this screen.";return}
+  const css=getComputedStyle(document.documentElement);const col=css.getPropertyValue("--b1").trim()||"#4B85C4";
+  MAP=window.L.map("map",{zoomControl:true,attributionControl:true});
+  let tileFail=0;const tl=window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(MAP);
+  tl.on("tileerror",()=>{if(++tileFail===3)note.textContent="The background map can't load in this preview. Pins still work. The full map appears once the app is on its own web address."});
+  const pts=[];L.forEach(s=>{const la=num(s.prop.lat),lo=num(s.prop.lon);if(!isFinite(la)||!isFinite(lo))return;pts.push([la,lo]);const st=s.status||"In progress";
+    const m=window.L.circleMarker([la,lo],{radius:10,weight:3,color:"#FFFFFF",fillColor:st==="Complete"?"#2B7A4B":st==="Sent"?"#508EB9":col,fillOpacity:1}).addTo(MAP);
+    m.bindPopup(`<b>${esc(s.prop.address||"Untitled site")}</b>${esc([s.prop.client,s.prop.date].filter(Boolean).join(" · "))}<br><span style="color:#5A6B77">${esc(st)}${s.prop.fileNo?" · #"+esc(s.prop.fileNo):""}</span><button class="btn primary" data-act="open" data-id="${s.id}">Open site</button><a class="btn" style="text-decoration:none;color:inherit" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${la},${lo}">Directions</a>`)});
+  if(pts.length===1)MAP.setView(pts[0],14);else if(pts.length)MAP.fitBounds(pts,{padding:[30,30],maxZoom:15});else MAP.setView([49.6,-123.4],7);
+  setTimeout(()=>MAP&&MAP.invalidateSize(),60)}
+function mapNearMe(){const note=$("#mapnote");if(!MAP)return;note.textContent="Finding your location…";
+  currentPos().then(c=>{if(!c){note.textContent="Location isn't available here. Allow location for this app, or install it from its web address.";return}
+    note.textContent="";MAP.setView([c.latitude,c.longitude],13);window.L.circleMarker([c.latitude,c.longitude],{radius:7,color:"#FFFFFF",weight:2,fillColor:"#B0281F",fillOpacity:1}).addTo(MAP).bindPopup("You are here")})}
+function exportKml(){const L=dirFiltered().filter(s=>isFinite(num(s.prop.lat))&&isFinite(num(s.prop.lon)));const note=$("#mapnote");
+  if(!L.length){note.textContent="None of these sites has a GPS point yet.";return}
+  const x=v=>String(v??"").replace(/[<>&'"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"}[c]));
+  const pm=L.map(s=>{const sum=siteSummary(s);const d=[["Client",s.prop.client],["File no.",s.prop.fileNo],["PID",s.prop.pid],["Date",s.prop.date],["Status",s.status||"In progress"],["Limiting layer",isFinite(sum.lim)?fmt(sum.lim)+" cm":""],["Avg Kfs",isFinite(sum.perm.avg)?fmt(sum.perm.avg)+" mm/d":""]].filter(r=>r[1]).map(r=>r[0]+": "+r[1]).join("\n");
+    return`<Placemark><name>${x(s.prop.address||"Untitled site")}</name><description>${x(d)}</description><styleUrl>#site</styleUrl><Point><coordinates>${num(s.prop.lon)},${num(s.prop.lat)},0</coordinates></Point></Placemark>`}).join("\n");
+  const kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Site &amp; Soil sites</name><Style id="site"><IconStyle><color>ffc4854b</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>\n${pm}\n</Document></kml>`;
+  deliverFile(new Blob([kml],{type:"application/vnd.google-earth.kml+xml"}),`Site and Soil sites - ${today()}.kml`,note,"Site and soil investigation sites")}
+
+/* ============================================================
+   Export – shared helpers
+   ============================================================ */
+function fileBase(s){const a=(s.prop.address||"Site").replace(/^Example:\s*/,"").split(",")[0].replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g," ");return`Site and Soil - ${a} - ${s.prop.date||today()}`}
+const dataUrlToBytes=d=>{const b=atob(d.split(",")[1]);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+const v=x=>(x===""||x==null)?"":x;
+const nv=x=>{const n=num(x);return isFinite(n)?n:v(x)};
+function consText(c){for(const[,list]of CONS){const f=list.find(x=>x[0]===c);if(f)return f[0]}return c||""}
+function fieldData(s){const sum=siteSummary(s);const st=S.settings;const rows=[
+ ["PI_CLIENT",s.prop.client,"Client"],["PI_CONTACT",s.prop.contact,"Contact person"],["PI_PHONE",s.prop.phone,"Phone"],["PI_EMAIL",s.prop.email,"Client email"],
+ ["PI_ADDRESS",s.prop.address,"Civic address"],["SS_FILE_NO",s.prop.fileNo,"File / project no."],["PI_PID",s.prop.pid,"PID"],["PI_LEGAL",s.prop.legal,"Legal description"],["PI_SITE_DATE",s.prop.date,"Date of site investigation"],
+ ["PI_LAT",nv(s.prop.lat),"Latitude"],["PI_LON",nv(s.prop.lon),"Longitude"],["SS_INVESTIGATOR",s.prop.investigator,"Investigated by"],["SS_WEATHER",s.prop.weather,"Weather"],
+ ["SS_SITE_DESC",s.site.desc,"Site description (follows 'The site is characterized by')"],["SS_VEGETATION",vegText(s),"Vegetation"],["SS_SLOPE",nv(s.site.slope),"Land slope near test pits (%)"],
+ ["SS_ASPECT",s.site.aspect,"Slope aspect"],["SS_POSITION",s.site.position,"Landscape position"],["SS_DRAINAGE",s.site.drainage,"Site drainage"],["SS_SURFACE_WATER",s.site.surfaceWater,"Surface water"],
+ ["SS_ENCUMBRANCES",s.site.encumbrances,"Easements, covenants, ROW, zoning"],["SS_BOUNDARIES",s.site.boundaries,"Boundaries confirmed"],["SS_SERVICES",s.site.services,"Buried services"],["SS_CLIMATE",s.site.climate,"Climate / soil factors"],
+ ["SS_PROPOSED_AREA",s.site.proposedArea,"Proposed dispersal area"],["SS_EXISTING",s.site.existing,"Existing system"],
+ ["SS_NUM_PITS",s.pits.length,"No. of test pits"],["SS_SHWT_MIN",nv(sum.shwt),"Estimated SHWT, shallowest (cm)"],["SS_RL_MIN",nv(sum.rl),"Depth to restrictive layer, shallowest (cm)"],["SS_LIMIT_MIN",nv(sum.lim),"Depth to limiting layer, shallowest (cm)"],
+ ["SS_CF_MAX",nv(sum.cfMax),"Coarse fragments, max (%)"],["SS_KFS_AVG",isFinite(sum.perm.avg)?+sum.perm.avg.toFixed(1):"","Average Kfs used for design (mm/d)"],["SS_KFS_N",sum.perm.n,"Boreholes used"],
+ ["SS_PERC_AVG",isFinite(sum.perc.avg)?+sum.perc.avg.toFixed(2):"","Percolation rate for sizing (min/in)"],["SS_SETBACKS_OK",sum.sb.bad?"No":"Yes","Horizontal setbacks comply"],
+ ["PERM_AIR",nv(s.perm.air),"Height of air hole (cm)"],["PERM_ID_IN",nv(s.perm.idIn),"Permeameter ID (in)"],["PERM_AUGER",nv(s.perm.auger),"Auger diameter (cm)"],["PERM_DEPTH",nv(s.perm.holeDepth),"Auger hole depth (cm)"],["PERM_FIN_DIA",nv(s.perm.finDia),"Finished diameter (cm)"],["PERM_F",nv(s.perm.F),"Soil factor F"]];
+ s.pits.forEach((p,i)=>{const P=`TP${i+1}_`;rows.push([P+"NAME",p.name,"Test pit name"],[P+"LOCATION",p.location,""],[P+"DEPTH",nv(p.depth),"Pit depth (cm)"],[P+"WT",p.wtObserved==="Yes"?nv(p.wtDepth):(p.wtObserved==="No"?"Not observed":""),"Water table on date (cm)"],[P+"SHWT",nv(p.shwt),"SHWT (cm)"],[P+"SHWT_BASIS",p.shwtBasis,""],[P+"RL",[p.rlType,p.rlDepth&&p.rlDepth+" cm"].filter(Boolean).join(", "),"Restrictive layer (type, depth)"],[P+"RL_DEPTH",nv(p.rlDepth),""],[P+"LIMIT",nv(pitLimiting(p)),"Usable depth to limiting layer (cm)"]);
+   p.layers.forEach((l,j)=>{const L=`${P}L${j+1}_`;[["FROM",nv(l.from)],["TO",nv(l.to)],["COLOUR",l.colour],["GRADE",l.grade],["TYPE",l.type],["CONS",consText(l.cons)],["TEXTURE",l.texture],["CF",[l.cfKind,l.cfPct&&l.cfPct+"%"].filter(Boolean).join(", ")],["ROOTS",l.roots],["MOTT_DEPTH",nv(l.mottDepth)],["MOTT_QTY",l.mottQty],["MOISTURE",l.moisture]].forEach(([k,val])=>rows.push([L+k,val,""]))})});
+ s.perm.holes.forEach((h,i)=>{const c=holeCalc(s.perm,h);const P=`BH${i+1}_`;rows.push([P+"LOCATION",h.location,""],[P+"PIT",h.pit,""]);h.readings.forEach((r,m)=>{if(r!=="")rows.push([`${P}MIN${m}`,nv(r),h.excl.includes(m)?"excluded from average":""])});rows.push([P+"KFS",isFinite(c.kfs)?+c.kfs.toFixed(1):"","Kfs (mm/d)"])});
+ s.perc.tests.forEach((t,i)=>{if(t.depth===""&&!t.t.some(x=>x!==""))return;rows.push([`PERC${i+1}_DEPTH`,nv(t.depth),""]);t.t.forEach((x,j)=>{if(x!=="")rows.push([`PERC${i+1}_T${j+1}`,nv(x),""])})});
+ [["DA",SB_DA,"da"],["TK",SB_TK,"tk"]].forEach(([P,L,g])=>L.forEach(([k,name])=>rows.push([`SB_${P}_${k.toUpperCase()}`,s.setbacks.na[g+"_"+k]?"N/A":nv(s.setbacks[g][k]),name])));
+ s.photos.forEach((ph,i)=>rows.push([`PHOTO${i+1}`,photoCaption(ph,i),ph.gpsSrc==="photo"?"GPS from photo":ph.gpsSrc==="phone"?"GPS from phone when added":""],[`PHOTO${i+1}_LAT`,ph.lat??"",""],[`PHOTO${i+1}_LON`,ph.lon??"",""],[`PHOTO${i+1}_TIME`,ph.time||"",""]));
+ rows.push(["SB_COMMENTS",s.setbacks.comments,"Setback comments"],["SS_NOTES",s.notes,"General notes"],["APP_PREPARED_BY",st.name,""],["APP_COMPANY",st.company,""],["APP_EXPORTED",new Date().toISOString(),""],["APP_TERMS",S.settings.terms?`v${S.settings.terms.version} agreed ${S.settings.terms.at}`:"",'Terms of Use acceptance']);
+ return rows}
+
+/* ============================================================
+   Excel export (ExcelJS)
+   ============================================================ */
+async function buildXlsx(s){s=await withPhotos(s);const X=window.ExcelJS;if(!X)throw new Error("The Excel tool didn't load. Connect to the internet once and try again.");
+  const wb=new X.Workbook();wb.creator=S.settings.name||"Site & Soil Field Log";wb.created=new Date();
+  const GREEN="FF508EB9",PALE="FFE6F2F7",LINE="FFBFD3DE",GREY="FF5A6B77";
+  const thin={style:"thin",color:{argb:LINE}};const box={top:thin,left:thin,bottom:thin,right:thin};
+  const sum=siteSummary(s);const st=S.settings;
+  function sheet(name,cols,landscape){const ws=wb.addWorksheet(name,{pageSetup:{paperSize:1,orientation:landscape?"landscape":"portrait",fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.5,right:.5,top:.6,bottom:.6,header:.3,footer:.3}},views:[{showGridLines:false}]});
+    ws.columns=cols.map(w=>({width:w}));ws.headerFooter.oddFooter=`&L&8${(st.company||"").replace(/&/g,"&&")}&C&8${name}&R&8Page &P of &N`;return ws}
+  function header(ws,title,ncol){let r=1;
+    if(st.logo){try{const id=wb.addImage({base64:st.logo,extension:"png"});const im=new Image();im.src=st.logo;const h=48,w=im.width&&im.height?Math.round(h*im.width/im.height):120;ws.addImage(id,{tl:{col:ncol-1.6,row:0.15},ext:{width:Math.min(w,180),height:h}})}catch(e){}}
+    ws.getRow(r).height=22;const c1=ws.getCell(r,1);c1.value=st.company||"";c1.font={bold:true,size:13,color:{argb:GREY}};r++;
+    ws.mergeCells(r,1,r,ncol);const t=ws.getCell(r,1);t.value=title;t.font={bold:true,size:16,color:{argb:"FFFFFFFF"}};t.fill={type:"pattern",pattern:"solid",fgColor:{argb:GREEN}};t.alignment={vertical:"middle",indent:1};ws.getRow(r).height=28;r++;
+    ws.mergeCells(r,1,r,ncol);const p=ws.getCell(r,1);p.value=[s.prop.address,s.prop.pid&&"PID "+s.prop.pid,s.prop.date&&"Investigated "+s.prop.date].filter(Boolean).join("   ·   ").replace(/^Example:\s*/,"");p.font={size:10,color:{argb:GREY}};r++;
+    return r+1}
+  function section(ws,r,text,ncol){ws.mergeCells(r,1,r,ncol);const c=ws.getCell(r,1);c.value=text.toUpperCase();c.font={bold:true,size:10,color:{argb:GREEN}};c.border={bottom:{style:"medium",color:{argb:GREEN}}};ws.getRow(r).height=20;return r+1}
+  function kv(ws,r,label,value,unit,ncol){const a=ws.getCell(r,1);a.value=label;a.font={bold:true,size:10};a.fill={type:"pattern",pattern:"solid",fgColor:{argb:PALE}};a.border=box;a.alignment={vertical:"top",wrapText:true};
+    const end=unit?ncol-1:ncol;ws.mergeCells(r,2,r,end);const b=ws.getCell(r,2);b.value=value===""||value==null?"":value;b.font={size:10};b.border=box;b.alignment={vertical:"top",wrapText:true,horizontal:"left"};for(let c=3;c<=end;c++)ws.getCell(r,c).border=box;
+    if(unit){const u=ws.getCell(r,ncol);u.value=unit;u.font={size:10,color:{argb:GREY}};u.border=box}
+    const len=String(b.value||"").length;if(len>60)ws.getRow(r).height=Math.min(15*Math.ceil(len/60),120);return r+1}
+  function thead(ws,r,labels,startCol=1){labels.forEach((l,i)=>{const c=ws.getCell(r,startCol+i);c.value=l;c.font={bold:true,size:9,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:GREEN}};c.alignment={horizontal:"center",vertical:"middle",wrapText:true};c.border=box});ws.getRow(r).height=30;return r+1}
+  function trow(ws,r,vals,startCol=1,opts={}){vals.forEach((val,i)=>{const c=ws.getCell(r,startCol+i);c.value=val===""||val==null||(typeof val==="number"&&!isFinite(val))?"":val;c.font={size:9,...(opts.font&&opts.font(i)||{})};c.border=box;c.alignment={horizontal:typeof c.value==="number"?"center":"left",vertical:"middle",wrapText:true};if(opts.fill)c.fill={type:"pattern",pattern:"solid",fgColor:{argb:opts.fill}}});return r+1}
+
+  /* Site & Soil */
+  let ws=sheet("Site & Soil Report",[34,20,20,20,12]);let r=header(ws,"Site and Soil Evaluation",5);
+  r=section(ws,r,"Property information",5);
+  [["Client",s.prop.client],["File / project no.",s.prop.fileNo],["Contact person",s.prop.contact],["Phone",s.prop.phone],["Civic address",s.prop.address],["PID",s.prop.pid],["Legal description",s.prop.legal],["GPS (lat, long)",s.prop.lat&&s.prop.lon?`${s.prop.lat}, ${s.prop.lon}`:""],["Date of site investigation",s.prop.date],["Investigated by",s.prop.investigator],["Weather / recent conditions",s.prop.weather]].forEach(([a,b])=>r=kv(ws,r,a,b,"",5));
+  r++;r=section(ws,r,"Site description",5);
+  r=kv(ws,r,"Site description",s.site.desc?"The site is characterized by "+s.site.desc:"","",5);
+  [["Vegetation",vegText(s)],["Landscape position",s.site.position],["Site drainage",s.site.drainage],["Slope aspect",s.site.aspect],["Surface water / seepage",s.site.surfaceWater],["Special climate or soil factors",s.site.climate],["Easements, covenants, ROW, zoning, riparian, health orders",s.site.encumbrances],["Legal boundaries confirmed",s.site.boundaries],["Buried services",s.site.services],["Proposed dispersal area",s.site.proposedArea],["Existing sewerage system",s.site.existing]].forEach(([a,b])=>r=kv(ws,r,a,b,"",5));
+  r++;r=section(ws,r,"Summary of soil conditions",5);
+  [["Site plan drawing","See attached",""],["No. of test pits",s.pits.length,""],["Estimated SHWT",nv(sum.shwt),"cm"],["Depth to restrictive layer",nv(sum.rl),"cm"],["Depth to limiting layer",nv(sum.lim),"cm"],["Coarse fragments (max)",nv(sum.cfMax),"%"],["Hydraulic conductivity K(fs)",isFinite(sum.perm.avg)?+sum.perm.avg.toFixed(0):"","mm/day"],["Percolation rate",isFinite(sum.perc.avg)?+sum.perc.avg.toFixed(1):"","min/in"],["Land slope near test pits",nv(s.site.slope),"%"],["Horizontal setbacks comply?",sum.sb.bad?"No – see Table 2":(sum.sb.blank?"Incomplete":"Yes"),""]].forEach(([a,b,u])=>r=kv(ws,r,a,b,u||" ",5));
+  if(s.notes){r++;r=section(ws,r,"Notes",5);r=kv(ws,r,"General notes",s.notes,"",5)}
+  r++;r=section(ws,r,"Prepared by",5);r=kv(ws,r,"Name",[st.name,st.reg].filter(Boolean).join(", "),"",5);r=kv(ws,r,"Company",st.company,"",5);r=kv(ws,r,"Contact",[st.phone,st.email].filter(Boolean).join("  ·  "),"",5);
+  r++;ws.mergeCells(r,1,r,5);const disc=ws.getCell(r,1);disc.value="Field data recorded with Site & Soil Field Log, subject to its Terms of Use (version "+TERMS_VERSION+"). This record is not a design; all data must be verified, and interpretation and system design are the responsibility of the Authorized Person.";disc.font={italic:true,size:8,color:{argb:GREY}};disc.alignment={wrapText:true};ws.getRow(r).height=24;
+  ws.pageSetup.printArea=`A1:E${r}`;
+
+  /* A1 Test pits */
+  ws=sheet("A1 - Test Pits",[7,7,15,8,10,10,18,13,9,9,12,9,16],true);r=header(ws,"Appendix 1 – Test Pit Records",13);
+  const H=["From (cm)","To (cm)","Matrix colour","Grade","Type","Consis.","Texture (USDA)","C. frags kind, %","Roots","Mottles depth","Mottles qty/size","Moisture","Notes"];
+  s.pits.forEach(p=>{r=section(ws,r,`Test pit ${p.name} – profile log${p.location?"  ·  "+p.location:""}${p.depth?"  ·  depth "+p.depth+" cm":""}`,13);r=thead(ws,r,H);
+    if(!p.layers.length)r=trow(ws,r,["","","","","","","","","","","","",""]);
+    p.layers.forEach(l=>r=trow(ws,r,[nv(l.from),nv(l.to),l.colour,l.grade!==""?+l.grade:"",l.type,consText(l.cons),l.texture,[l.cfKind,l.cfPct&&l.cfPct+"%"].filter(Boolean).join(", "),l.roots,nv(l.mottDepth),l.mottQty,l.moisture,l.notes]));
+    const kv2=(label,val,c1,c2)=>{ws.mergeCells(r,c1,r,c1+2);const a=ws.getCell(r,c1);a.value=label;a.font={bold:true,size:9};a.fill={type:"pattern",pattern:"solid",fgColor:{argb:PALE}};a.border=box;ws.mergeCells(r,c1+3,r,c2);const b=ws.getCell(r,c1+3);b.value=val;b.font={size:9};b.border=box;b.alignment={horizontal:"left"}};
+    kv2("WT at date of investigation",p.wtObserved==="Yes"?(p.wtDepth?p.wtDepth+" cm":"Yes"):p.wtObserved==="No"?"Not observed":"",1,6);kv2("Seasonal high water table",[p.shwt&&p.shwt+" cm",p.shwtBasis].filter(Boolean).join(" – "),7,13);r++;
+    kv2("Restrictive layer (type, depth)",[p.rlType,p.rlDepth&&p.rlDepth+" cm"].filter(Boolean).join(", "),1,6);kv2("Usable soil depth to limiting layer",isFinite(pitLimiting(p))?pitLimiting(p)+" cm":"",7,13);r++;
+    if(p.notes){ws.mergeCells(r,1,r,13);const n=ws.getCell(r,1);n.value="Notes: "+p.notes;n.font={size:9,italic:true};n.alignment={wrapText:true};r++}
+    r++});
+  r=section(ws,r,"Key",13);
+  [["Grade","3 Strong · 2 Moderate · 1 Weak · 0 Structureless"],["Type","sg single grain · m massive · gr granular · abk angular blocky · sbk subangular blocky · pl platy · pr prismatic · cpr columnar"],["Consistence (moist)","L loose · VFR very friable · FR friable · FI firm · VFI very firm · EF extremely firm"],["Consistence (dry)","S soft · SH slightly hard · MH moderately hard · HA hard · VH very hard · EH extremely hard"],["Cemented","SR slightly rigid · R rigid · VR very rigid"]].forEach(([a,b])=>{ws.mergeCells(r,1,r,3);ws.getCell(r,1).value=a;ws.getCell(r,1).font={bold:true,size:8};ws.mergeCells(r,4,r,13);ws.getCell(r,4).value=b;ws.getCell(r,4).font={size:8};r++});
+
+  /* A2 Permeability */
+  const nh=s.perm.holes.length;ws=sheet("A2 - Permeability",[16].concat(Array(nh*2).fill(10)),nh>4);const nc=1+nh*2;r=header(ws,"Appendix 2 – Constant Head Borehole Permeability",nc);
+  r=section(ws,r,"Test setup",nc);
+  [["Height of air hole",nv(s.perm.air),"cm"],["Permeameter ID",nv(s.perm.idIn),"in"],["Permeameter X-section area",+permArea(s.perm).toFixed(2),"cm²"],["Auger diameter",nv(s.perm.auger),"cm"],["Auger hole depth",nv(s.perm.holeDepth),"cm"],["Auger hole finished diameter",nv(s.perm.finDia),"cm"],["Soil factor F",nv(s.perm.F),(SOIL_F.find(x=>x[0]===String(s.perm.F))||["",""])[1]]].forEach(([a,b,u])=>{ws.mergeCells(r,1,r,Math.min(3,nc));const c=ws.getCell(r,1);c.value=a;c.font={bold:true,size:9};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:PALE}};c.border=box;const d=ws.getCell(r,Math.min(4,nc));d.value=b;d.font={size:9};d.border=box;d.alignment={horizontal:"center"};if(nc>=5){const e=ws.getCell(r,5);e.value=u;e.font={size:9,color:{argb:GREY}}}r++});
+  r++;r=section(ws,r,"Readings",nc);
+  const hh=["Borehole #"];s.perm.holes.forEach(h=>{hh.push(h.name,"")});const hr=r;r=thead(ws,r,hh);s.perm.holes.forEach((h,i)=>ws.mergeCells(hr,2+i*2,hr,3+i*2));
+  r=trow(ws,r,["Location"].concat(...s.perm.holes.map(h=>[h.location,""])));s.perm.holes.forEach((h,i)=>ws.mergeCells(r-1,2+i*2,r-1,3+i*2));
+  r=trow(ws,r,["Nearest test pit"].concat(...s.perm.holes.map(h=>[h.pit,""])));s.perm.holes.forEach((h,i)=>ws.mergeCells(r-1,2+i*2,r-1,3+i*2));
+  r=thead(ws,r,[""].concat(...s.perm.holes.map(()=>["Reading (mm)","Rate (mm/min)"])));
+  const maxM=Math.max(...s.perm.holes.map(h=>h.readings.length));const calcs=s.perm.holes.map(h=>holeCalc(s.perm,h));
+  for(let m=0;m<maxM;m++){const vals=["Minute "+m];s.perm.holes.forEach((h,i)=>{vals.push(nv(h.readings[m]??""),isFinite(calcs[i].rates[m])?+calcs[i].rates[m].toFixed(2):"")});
+    r=trow(ws,r,vals,1,{font:ci=>{if(ci===0)return{bold:true};const hi=Math.floor((ci-1)/2);return s.perm.holes[hi].excl.includes(m)&&(ci-1)%2===1?{strike:true,color:{argb:GREY}}:{}}})}
+  const tot=(label,fn,unit)=>{const vals=[label];calcs.forEach(c=>{const x=fn(c);vals.push(isFinite(x)?+x.toFixed(unit==="mm/min"?2:1):"",unit)});r=trow(ws,r,vals,1,{fill:PALE,font:ci=>ci===0?{bold:true}:{}})};
+  tot("Average stable rate of fall",c=>c.avg,"mm/min");tot("Average flow rate",c=>c.flow,"ml/min");tot("Kfs",c=>c.kfs,"mm/d");
+  r++;ws.mergeCells(r,1,r,Math.min(3,nc));ws.getCell(r,1).value="Average K(fs) used for design";ws.getCell(r,1).font={bold:true,size:11};const kc=ws.getCell(r,Math.min(4,nc));kc.value=isFinite(sum.perm.avg)?+sum.perm.avg.toFixed(0):"";kc.font={bold:true,size:11};kc.border=box;kc.alignment={horizontal:"center"};if(nc>=5)ws.getCell(r,5).value=`mm/d  (${sum.perm.n} boreholes)`;r+=2;
+  ws.mergeCells(r,1,r,nc);ws.getCell(r,1).value="Struck-through rates were not used in the average (unstable readings).";ws.getCell(r,1).font={italic:true,size:8,color:{argb:GREY}};
+
+  /* A2 Percolation */
+  ws=sheet("A2 - Percolation",[8,16,9,9,9,9,9,9,14]);r=header(ws,"Appendix 2 – Percolation Tests",9);
+  r=thead(ws,r,["Test #","Depth of hole base (cm)","#1","#2","#3","#4","#5","#6","Lowest rate (min/in)"]);
+  s.perc.tests.forEach((t,i)=>{const lo=percCalc(t);r=trow(ws,r,[i+1,nv(t.depth)].concat(t.t.map(nv),[isFinite(lo)?lo:""]))});
+  r++;ws.mergeCells(r,1,r,8);ws.getCell(r,1).value="Percolation rate for system sizing (average of lowest rates)";ws.getCell(r,1).font={bold:true,size:10};const pc=ws.getCell(r,9);pc.value=isFinite(sum.perc.avg)?+sum.perc.avg.toFixed(2):"";pc.font={bold:true};pc.border=box;pc.alignment={horizontal:"center"};
+
+  /* T2 Setbacks */
+  ws=sheet("T2 - Setbacks",[40,12,14,10,26]);r=header(ws,"Table 2 – Setback Distances",5);
+  [["Setback distance from discharge area",SB_DA,"da"],["Setback distance from subsurface tank, sewer or pipe",SB_TK,"tk"]].forEach(([title,L,g])=>{r=section(ws,r,title,5);r=thead(ws,r,["Feature","SPM min. (m)","This project (m)","OK?",""]);
+    L.forEach(([k,name,spm])=>{const st=sbStatus(s,g,k,spm);const meas=s.setbacks.na[g+"_"+k]?"N/A":nv(s.setbacks[g][k]);r=trow(ws,r,[name,spm,meas,st==="ok"?"OK":st==="bad"?"NO":st==="na"?"N/A":"",""],1,{font:ci=>ci===3&&st==="bad"?{bold:true,color:{argb:"FFB0281F"}}:ci===3&&st==="ok"?{bold:true,color:{argb:"FF2B7A4B"}}:{}})});r++});
+  if(s.setbacks.comments){ws.mergeCells(r,1,r,5);ws.getCell(r,1).value="Comments: "+s.setbacks.comments;ws.getCell(r,1).font={size:9};ws.getCell(r,1).alignment={wrapText:true};ws.getRow(r).height=30}
+
+  /* Photos */
+  if(s.photos.length){ws=sheet("Photos",[45,4,45]);r=header(ws,"Site Photographs",3);
+    for(let i=0;i<s.photos.length;i+=2){[0,1].forEach(k=>{const ph=s.photos[i+k];if(!ph)return;const id=wb.addImage({base64:ph.data,extension:"jpeg"});const W=300,Hh=Math.round(W*(ph.h||3)/(ph.w||4));
+        ws.addImage(id,{tl:{col:k*2,row:r-1},ext:{width:W,height:Hh}});const cap=ws.getCell(r+Math.ceil(Hh/20),1+k*2);cap.value=photoCaption(ph,i+k);cap.font={size:9,italic:true};cap.alignment={wrapText:true}});
+      const p0=s.photos[i],p1=s.photos[i+1];const hmax=Math.max(...[p0,p1].filter(Boolean).map(ph=>Math.round(300*(ph.h||3)/(ph.w||4))));r+=Math.ceil(hmax/20)+3}}
+
+  /* Field data */
+  ws=wb.addWorksheet("Field Data");ws.columns=[{header:"Key",width:22},{header:"Value",width:50},{header:"Description",width:44}];ws.getRow(1).font={bold:true};
+  fieldData(s).forEach(row=>ws.addRow(row.map(x=>x===""||x==null?"":x)));
+  ws.addRow([]);const strip=JSON.parse(JSON.stringify(s));strip.photos=strip.photos.map(p=>({caption:p.caption,pit:p.pit}));ws.addRow(["APP_JSON",JSON.stringify(strip),"Full field record (for re-import)"]);
+  const buf=await wb.xlsx.writeBuffer();return new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
+
+/* ============================================================
+   Word export (docx)
+   ============================================================ */
+async function buildDocx(s){s=await withPhotos(s);const D=window.docx;if(!D)throw new Error("The Word tool didn't load. Connect to the internet once and try again.");
+  const{Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,ImageRun,HeadingLevel,BorderStyle,ShadingType,PageBreak,Footer,PageNumber,PageOrientation,TableLayoutType}=D;
+  const st=S.settings;const sum=siteSummary(s);const GREEN="508EB9",PALE="E6F2F7";
+  const T=(text,o={})=>new TextRun({text:String(text??""),font:"Calibri",size:o.size||20,bold:o.bold,italics:o.italics,color:o.color,strike:o.strike});
+  const P=(text,o={})=>new Paragraph({children:[T(text,o)],spacing:{after:o.after??80},alignment:o.align});
+  const H=(text)=>new Paragraph({children:[T(text.toUpperCase(),{bold:true,size:20,color:GREEN})],spacing:{before:240,after:100},border:{bottom:{style:BorderStyle.SINGLE,size:12,color:GREEN,space:2}}});
+  const cell=(text,o={})=>new TableCell({children:[new Paragraph({children:[T(text,{size:o.size||18,bold:o.bold,color:o.color,strike:o.strike})],alignment:o.align})],shading:o.fill?{type:ShadingType.CLEAR,color:"auto",fill:o.fill}:undefined,width:o.w?{size:o.w,type:WidthType.PERCENTAGE}:undefined,columnSpan:o.span,margins:{top:40,bottom:40,left:80,right:80}});
+  const kvTable=rows=>new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:rows.map(([a,b,u])=>new TableRow({children:[cell(a,{bold:true,fill:PALE,w:38}),cell(b===""||b==null||(typeof b==="number"&&!isFinite(b))?"":(u?`${b} ${u}`:b),{w:62})]}))});
+  const grid=(head,rows,o={})=>new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[new TableRow({tableHeader:true,children:head.map(h=>cell(h,{bold:true,color:"FFFFFF",fill:GREEN,size:o.size||16,align:AlignmentType.CENTER}))})].concat(rows.map((r,ri)=>new TableRow({children:r.map((x,ci)=>cell(x===""||x==null||(typeof x==="number"&&!isFinite(x))?"":x,{size:o.size||16,align:typeof x==="number"?AlignmentType.CENTER:undefined,strike:o.strike&&o.strike(ri,ci),bold:o.bold&&o.bold(ri,ci),fill:o.fill&&o.fill(ri,ci)}))})))});
+  const addr=(s.prop.address||"").replace(/^Example:\s*/,"");
+  const head=[];
+  if(st.logo){try{const im=new Image();im.src=st.logo;await new Promise(r=>{im.complete?r():im.onload=r});const h=50,w=Math.min(200,Math.round(h*(im.width||3)/(im.height||1)));head.push(new Paragraph({children:[new ImageRun({data:dataUrlToBytes(st.logo),transformation:{width:w,height:h}})],alignment:AlignmentType.RIGHT}))}catch(e){}}
+  head.push(P(st.company||"",{bold:true,size:24,color:"5A6B77",after:40}),new Paragraph({children:[T("Site and Soil Evaluation",{bold:true,size:40,color:GREEN})],spacing:{after:40}}),P([addr,s.prop.pid&&"PID "+s.prop.pid].filter(Boolean).join("  ·  "),{size:20,color:"5A6B77",after:200}));
+  const body=[...head,
+    H("Property information"),kvTable([["Client",s.prop.client],["File / project no.",s.prop.fileNo],["Contact person",s.prop.contact],["Phone",s.prop.phone],["Civic address",s.prop.address],["PID",s.prop.pid],["Legal description",s.prop.legal],["GPS (lat, long)",s.prop.lat&&s.prop.lon?`${s.prop.lat}, ${s.prop.lon}`:""],["Date of site investigation",s.prop.date],["Investigated by",s.prop.investigator],["Weather / recent conditions",s.prop.weather]]),
+    H("Site description"),P(s.site.desc?"The site is characterized by "+s.site.desc:"",{after:120}),
+    kvTable([["Vegetation",vegText(s)],["Landscape position",s.site.position],["Site drainage",s.site.drainage],["Land slope near test pits",nv(s.site.slope),"%"],["Slope aspect",s.site.aspect],["Surface water / seepage",s.site.surfaceWater],["Special climate or soil factors",s.site.climate],["Easements, covenants, ROW, zoning, riparian, health orders",s.site.encumbrances],["Legal boundaries confirmed",s.site.boundaries],["Buried services",s.site.services],["Proposed dispersal area",s.site.proposedArea],["Existing sewerage system",s.site.existing]]),
+    H("Summary of soil conditions"),kvTable([["Site plan drawing","See attached"],["No. of test pits",s.pits.length],["Estimated SHWT",nv(sum.shwt),"cm"],["Depth to restrictive layer",nv(sum.rl),"cm"],["Depth to limiting layer",nv(sum.lim),"cm"],["Coarse fragments (max)",nv(sum.cfMax),"%"],["Hydraulic conductivity K(fs)",isFinite(sum.perm.avg)?Math.round(sum.perm.avg):"","mm/day"],["Percolation rate",isFinite(sum.perc.avg)?+sum.perc.avg.toFixed(1):"","min/in"],["Horizontal setbacks comply?",sum.sb.bad?"No – see Table 2":(sum.sb.blank?"Incomplete":"Yes")]])];
+  if(s.notes)body.push(H("Notes"),P(s.notes));
+  body.push(H("Prepared by"),P([st.name,st.reg].filter(Boolean).join(", ")||" ",{bold:true,after:20}),P(st.company||"",{after:20}),P([st.phone,st.email].filter(Boolean).join("  ·  ")),
+    P("Field data recorded with Site & Soil Field Log, subject to its Terms of Use (version "+TERMS_VERSION+"). This record is not a design; all data must be verified, and interpretation and system design are the responsibility of the Authorized Person.",{italics:true,size:16,color:"5A6B77"}));
+  /* Appendices in landscape section */
+  const app=[new Paragraph({children:[T("Appendix 1 – Test Pit Records",{bold:true,size:32,color:GREEN})],spacing:{after:120}})];
+  s.pits.forEach(p=>{app.push(H(`Test pit ${p.name}${p.location?" – "+p.location:""}${p.depth?" (depth "+p.depth+" cm)":""}`),
+    grid(["From (cm)","To (cm)","Matrix colour","Grade","Type","Consis.","Texture (USDA)","C. frags","Roots","Mottles depth","Mottles qty/size","Moisture"],p.layers.map(l=>[nv(l.from),nv(l.to),l.colour,l.grade!==""?+l.grade:"",l.type,consText(l.cons),l.texture,[l.cfKind,l.cfPct&&l.cfPct+"%"].filter(Boolean).join(", "),l.roots,nv(l.mottDepth),l.mottQty,l.moisture])),
+    new Paragraph({spacing:{after:60},children:[]}),
+    kvTable([["WT at date of investigation",p.wtObserved==="Yes"?(p.wtDepth?p.wtDepth+" cm":"Yes"):p.wtObserved==="No"?"Not observed":""],["Seasonal high water table",[p.shwt&&p.shwt+" cm",p.shwtBasis].filter(Boolean).join(" – ")],["Restrictive layer (type, depth)",[p.rlType,p.rlDepth&&p.rlDepth+" cm"].filter(Boolean).join(", ")],["Usable soil depth to limiting layer",isFinite(pitLimiting(p))?pitLimiting(p)+" cm":""]]));
+    if(p.notes)app.push(P("Notes: "+p.notes,{italics:true,size:18}))});
+  app.push(P("Grade: 3 Strong, 2 Moderate, 1 Weak, 0 Structureless. Type: sg single grain, m massive, gr granular, abk angular blocky, sbk subangular blocky, pl platy, pr prismatic, cpr columnar. Consistence (moist): L loose, VFR very friable, FR friable, FI firm, VFI very firm, EF extremely firm; (dry): S soft, SH slightly hard, MH moderately hard, HA hard, VH very hard, EH extremely hard.",{size:14,color:"5A6B77"}));
+  app.push(new Paragraph({children:[new PageBreak()]}),new Paragraph({children:[T("Appendix 2 – Soil Permeability",{bold:true,size:32,color:GREEN})],spacing:{after:120}}),
+    P(`Constant head borehole permeameter. Air hole ${s.perm.air} cm · permeameter ID ${s.perm.idIn} in (area ${permArea(s.perm).toFixed(2)} cm²) · auger ${s.perm.auger} cm · hole depth ${s.perm.holeDepth} cm · finished diameter ${s.perm.finDia} cm · soil factor F = ${s.perm.F}.`,{size:18}));
+  const calcs=s.perm.holes.map(h=>holeCalc(s.perm,h));const maxM=Math.max(...s.perm.holes.map(h=>h.readings.length));
+  const prow=[["Location"].concat(...s.perm.holes.map(h=>[h.location,""])),["Nearest test pit"].concat(...s.perm.holes.map(h=>[h.pit,""]))];
+  for(let m=0;m<maxM;m++){if(!s.perm.holes.some(h=>(h.readings[m]??"")!==""))continue;prow.push(["Minute "+m].concat(...s.perm.holes.map((h,i)=>[nv(h.readings[m]??""),isFinite(calcs[i].rates[m])?+calcs[i].rates[m].toFixed(2):""])))}
+  const firstTot=prow.length;
+  prow.push(["Avg stable rate (mm/min)"].concat(...calcs.map(c=>[isFinite(c.avg)?+c.avg.toFixed(2):"",""])),["Avg flow rate (ml/min)"].concat(...calcs.map(c=>[isFinite(c.flow)?+c.flow.toFixed(1):"",""])),["Kfs (mm/d)"].concat(...calcs.map(c=>[isFinite(c.kfs)?+c.kfs.toFixed(0):"",""])));
+  const minuteRows=[];for(let m=0;m<maxM;m++)if(s.perm.holes.some(h=>(h.readings[m]??"")!==""))minuteRows.push(m);
+  app.push(grid(["Borehole"].concat(...s.perm.holes.map(h=>["#"+h.name+" reading (mm)","rate"])),prow,{strike:(ri,ci)=>{if(ri<2||ri>=firstTot||ci===0||(ci-1)%2!==1)return false;const m=minuteRows[ri-2];return s.perm.holes[Math.floor((ci-1)/2)].excl.includes(m)},bold:(ri,ci)=>ri>=firstTot||ci===0,fill:(ri)=>ri>=firstTot?PALE:undefined}),
+    P(`Average K(fs) used for design: ${isFinite(sum.perm.avg)?Math.round(sum.perm.avg):"—"} mm/d (${sum.perm.n} boreholes). Struck-through rates were not used in the average.`,{bold:true,size:20}));
+  if(sum.perc.n){app.push(H("Percolation tests"),grid(["Test #","Depth (cm)","#1","#2","#3","#4","#5","#6","Lowest (min/in)"],s.perc.tests.filter(t=>t.depth!==""||t.t.some(x=>x!=="")).map((t,i)=>[i+1,nv(t.depth)].concat(t.t.map(nv),[isFinite(percCalc(t))?percCalc(t):""]))),P(`Percolation rate for system sizing: ${fmt(sum.perc.avg,2)} min/in`,{bold:true}))}
+  app.push(new Paragraph({children:[new PageBreak()]}),new Paragraph({children:[T("Table 2 – Setback Distances",{bold:true,size:32,color:GREEN})],spacing:{after:120}}));
+  [["From discharge area",SB_DA,"da"],["From subsurface tank, sewer or pipe",SB_TK,"tk"]].forEach(([title,L,g])=>{app.push(H(title),grid(["Feature","SPM min. (m)","This project (m)","OK?"],L.map(([k,name,spm])=>{const stt=sbStatus(s,g,k,spm);return[name,spm,s.setbacks.na[g+"_"+k]?"N/A":nv(s.setbacks[g][k]),stt==="ok"?"OK":stt==="bad"?"NO":stt==="na"?"N/A":""]}),{size:18,bold:(ri,ci)=>ci===3}))});
+  if(s.setbacks.comments)app.push(P("Comments: "+s.setbacks.comments,{size:18}));
+  const photos=[];if(s.photos.length){photos.push(new Paragraph({children:[T("Site Photographs",{bold:true,size:32,color:GREEN})],spacing:{after:120}}));
+    s.photos.forEach((ph,i)=>{const W=420,Hh=Math.round(W*(ph.h||3)/(ph.w||4));photos.push(new Paragraph({children:[new ImageRun({data:dataUrlToBytes(ph.data),transformation:{width:W,height:Math.min(Hh,560)}})],alignment:AlignmentType.CENTER,spacing:{before:120}}),P(photoCaption(ph,i),{italics:true,size:18,align:AlignmentType.CENTER}))})}
+  const footer=new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[T(`${st.company?st.company+"  ·  ":""}${addr}  ·  Page `,{size:16,color:"5A6B77"}),new TextRun({children:[PageNumber.CURRENT],size:16,color:"5A6B77",font:"Calibri"})]})]});
+  const margin={top:1000,bottom:1000,left:1000,right:1000};
+  const doc=new Document({creator:st.name||"Site & Soil Field Log",title:fileBase(s),styles:{default:{document:{run:{font:"Calibri",size:20}}}},sections:[
+    {properties:{page:{margin}},footers:{default:footer},children:body},
+    {properties:{page:{margin,size:{orientation:PageOrientation.LANDSCAPE}}},footers:{default:footer},children:app},
+    ...(photos.length?[{properties:{page:{margin}},footers:{default:footer},children:photos}]:[])]});
+  return await Packer.toBlob(doc)}
+
+/* ============================================================
+   PDF export (jsPDF + AutoTable)
+   ============================================================ */
+async function buildPdf(s){s=await withPhotos(s);const J=window.jspdf;if(!J||!J.jsPDF)throw new Error("The PDF tool didn't load. Connect to the internet once and try again.");
+  const doc=new J.jsPDF({unit:"mm",format:"letter",orientation:"portrait"});if(typeof doc.autoTable!=="function")throw new Error("The PDF table tool didn't load. Connect to the internet once and try again.");
+  const st=S.settings;const sum=siteSummary(s);const GREEN=[80,142,185],PALE=[230,242,247],GREY=[90,107,119],LINE=[191,211,222];
+  const M=15;const W=()=>doc.internal.pageSize.getWidth();const Hh=()=>doc.internal.pageSize.getHeight();
+  const addr=(s.prop.address||"").replace(/^Example:\s*/,"");
+  const clean=x=>(x===""||x==null||(typeof x==="number"&&!isFinite(x)))?"":String(x);
+  let logo=null;if(st.logo){try{const im=new Image();im.src=st.logo;await new Promise(r=>{im.complete&&im.naturalWidth?r():(im.onload=r,im.onerror=r)});if(im.naturalWidth)logo={d:st.logo,r:im.naturalWidth/im.naturalHeight}}catch(e){}}
+  let y=M;
+  const need=h=>{if(y+h>Hh()-18){doc.addPage("letter",doc.internal.pageSize.getWidth()>doc.internal.pageSize.getHeight()?"landscape":"portrait");y=M+4}};
+  const title=(text,orient)=>{if(orient){doc.addPage("letter",orient);y=M}
+    if(logo){const h=14,w=Math.min(55,h*logo.r);try{doc.addImage(logo.d,"PNG",W()-M-w,y-2,w,h)}catch(e){}}
+    doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(...GREY);if(st.company)doc.text(st.company,M,y+2);
+    doc.setFontSize(18);doc.setTextColor(...GREEN);doc.text(text,M,y+11);
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(...GREY);doc.text([addr,s.prop.pid&&"PID "+s.prop.pid,s.prop.date&&"Investigated "+s.prop.date].filter(Boolean).join("   ·   "),M,y+17);y+=24};
+  const H=text=>{need(14);doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.setTextColor(...GREEN);doc.text(text.toUpperCase(),M,y+4);doc.setDrawColor(...GREEN);doc.setLineWidth(.5);doc.line(M,y+5.5,W()-M,y+5.5);y+=9};
+  const para=(text,o={})=>{if(!text)return;doc.setFont("helvetica",o.italic?"italic":(o.bold?"bold":"normal"));doc.setFontSize(o.size||9.5);doc.setTextColor(...(o.color||[23,32,27]));
+    const lines=doc.splitTextToSize(text,W()-2*M);const lh=(o.size||9.5)*0.42;need(lines.length*lh+2);doc.text(lines,M,y+3.5);y+=lines.length*lh+(o.after??3)};
+  const base={theme:"grid",margin:{left:M,right:M,bottom:18},styles:{font:"helvetica",fontSize:8.5,cellPadding:1.6,lineColor:LINE,lineWidth:.15,textColor:[23,32,27],overflow:"linebreak",valign:"middle"},headStyles:{fillColor:GREEN,textColor:255,fontStyle:"bold",halign:"center"}};
+  const kv=(rows)=>{doc.autoTable({...base,startY:y,body:rows.map(([a,b,u])=>[a,clean(b)===""?"":(u?`${clean(b)} ${u}`:clean(b))]),columnStyles:{0:{fontStyle:"bold",fillColor:PALE,cellWidth:62}}});y=doc.lastAutoTable.finalY+4};
+  const grid=(head,rows,o={})=>{doc.autoTable({...base,startY:y,head:[head],body:rows.map(r=>r.map(clean)),styles:{...base.styles,fontSize:o.size||7.5,halign:"center"},columnStyles:o.cols||{},didParseCell:o.cell});y=doc.lastAutoTable.finalY+4};
+
+  /* Main report */
+  title("Site and Soil Evaluation");
+  H("Property information");kv([["Client",s.prop.client],["File / project no.",s.prop.fileNo],["Contact person",s.prop.contact],["Phone",s.prop.phone],["Civic address",s.prop.address],["PID",s.prop.pid],["Legal description",s.prop.legal],["GPS (lat, long)",s.prop.lat&&s.prop.lon?`${s.prop.lat}, ${s.prop.lon}`:""],["Date of site investigation",s.prop.date],["Investigated by",s.prop.investigator],["Weather / recent conditions",s.prop.weather]]);
+  H("Site description");para(s.site.desc?"The site is characterized by "+s.site.desc:"");
+  kv([["Vegetation",vegText(s)],["Landscape position",s.site.position],["Site drainage",s.site.drainage],["Land slope near test pits",nv(s.site.slope),"%"],["Slope aspect",s.site.aspect],["Surface water / seepage",s.site.surfaceWater],["Special climate or soil factors",s.site.climate],["Easements, covenants, ROW, zoning, riparian, health orders",s.site.encumbrances],["Legal boundaries confirmed",s.site.boundaries],["Buried services",s.site.services],["Proposed dispersal area",s.site.proposedArea],["Existing sewerage system",s.site.existing]]);
+  H("Summary of soil conditions");kv([["Site plan drawing","See attached"],["No. of test pits",s.pits.length],["Estimated SHWT",nv(sum.shwt),"cm"],["Depth to restrictive layer",nv(sum.rl),"cm"],["Depth to limiting layer",nv(sum.lim),"cm"],["Coarse fragments (max)",nv(sum.cfMax),"%"],["Hydraulic conductivity K(fs)",isFinite(sum.perm.avg)?Math.round(sum.perm.avg):"","mm/day"],["Percolation rate",isFinite(sum.perc.avg)?+sum.perc.avg.toFixed(1):"","min/in"],["Horizontal setbacks comply?",sum.sb.bad?"No – see Table 2":(sum.sb.blank?"Incomplete":"Yes")]]);
+  if(s.notes){H("Notes");para(s.notes)}
+  H("Prepared by");para([st.name,st.reg].filter(Boolean).join(", ")||" ",{bold:true,after:1});if(st.company)para(st.company,{after:1});para([st.phone,st.email].filter(Boolean).join("  ·  "));
+  para("Field data recorded with Site & Soil Field Log, subject to its Terms of Use (version "+TERMS_VERSION+"). This record is not a design; all data must be verified, and interpretation and system design are the responsibility of the Authorized Person.",{italic:true,size:7.5,color:GREY});
+
+  /* Appendix 1 */
+  title("Appendix 1 – Test Pit Records","landscape");
+  s.pits.forEach(p=>{H(`Test pit ${p.name}${p.location?" – "+p.location:""}${p.depth?" (depth "+p.depth+" cm)":""}`);
+    grid(["From (cm)","To (cm)","Matrix colour","Grade","Type","Consis.","Texture (USDA)","C. frags","Roots","Mottles depth","Mottles qty/size","Moisture","Notes"],
+      p.layers.length?p.layers.map(l=>[nv(l.from),nv(l.to),l.colour,l.grade,l.type,consText(l.cons),l.texture,[l.cfKind,l.cfPct&&l.cfPct+"%"].filter(Boolean).join(", "),l.roots,nv(l.mottDepth),l.mottQty,l.moisture,l.notes]):[Array(13).fill("")]);
+    kv([["WT at date of investigation",p.wtObserved==="Yes"?(p.wtDepth?p.wtDepth+" cm":"Yes"):p.wtObserved==="No"?"Not observed":""],["Seasonal high water table",[p.shwt&&p.shwt+" cm",p.shwtBasis].filter(Boolean).join(" – ")],["Restrictive layer (type, depth)",[p.rlType,p.rlDepth&&p.rlDepth+" cm"].filter(Boolean).join(", ")],["Usable soil depth to limiting layer",isFinite(pitLimiting(p))?pitLimiting(p)+" cm":""]]);
+    if(p.notes)para("Notes: "+p.notes,{italic:true,size:8.5})});
+  para("Grade: 3 Strong, 2 Moderate, 1 Weak, 0 Structureless. Type: sg single grain, m massive, gr granular, abk angular blocky, sbk subangular blocky, pl platy, pr prismatic, cpr columnar. Consistence (moist): L loose, VFR very friable, FR friable, FI firm, VFI very firm, EF extremely firm; (dry): S soft, SH slightly hard, MH moderately hard, HA hard, VH very hard, EH extremely hard; (cemented): SR slightly rigid, R rigid, VR very rigid.",{size:7,color:GREY});
+
+  /* Appendix 2 */
+  title("Appendix 2 – Soil Permeability","landscape");
+  para(`Constant head borehole permeameter. Air hole ${s.perm.air} cm · permeameter ID ${s.perm.idIn} in (area ${permArea(s.perm).toFixed(2)} cm²) · auger ${s.perm.auger} cm · hole depth ${s.perm.holeDepth} cm · finished diameter ${s.perm.finDia} cm · soil factor F = ${s.perm.F}.`,{size:8.5});
+  const calcs=s.perm.holes.map(h=>holeCalc(s.perm,h));const maxM=Math.max(...s.perm.holes.map(h=>h.readings.length));
+  const rows=[["Location"].concat(...s.perm.holes.map(h=>[h.location,""])),["Nearest test pit"].concat(...s.perm.holes.map(h=>[h.pit,""]))];const exclCells=new Set();
+  for(let m=0;m<maxM;m++){if(!s.perm.holes.some(h=>(h.readings[m]??"")!==""))continue;
+    rows.push(["Minute "+m].concat(...s.perm.holes.map((h,i)=>{const r=calcs[i].rates[m];const x=h.excl.includes(m)&&isFinite(r);if(x)exclCells.add(rows.length+":"+(2+i*2));return[nv(h.readings[m]??""),isFinite(r)?r.toFixed(2)+(x?" *":""):""]})))}
+  const firstTot=rows.length;
+  rows.push(["Avg stable rate (mm/min)"].concat(...calcs.map(c=>[isFinite(c.avg)?c.avg.toFixed(2):"",""])),["Avg flow rate (ml/min)"].concat(...calcs.map(c=>[isFinite(c.flow)?c.flow.toFixed(1):"",""])),["Kfs (mm/d)"].concat(...calcs.map(c=>[isFinite(c.kfs)?c.kfs.toFixed(0):"",""])));
+  grid(["Borehole"].concat(...s.perm.holes.map(h=>["#"+h.name+" reading (mm)","rate (mm/min)"])),rows,{size:7.5,cols:{0:{halign:"left",fontStyle:"bold",cellWidth:40}},cell:d=>{if(d.section!=="body")return;
+    if(d.row.index>=firstTot){d.cell.styles.fillColor=PALE;d.cell.styles.fontStyle="bold"}if(exclCells.has(d.row.index+":"+d.column.index))d.cell.styles.textColor=GREY}});
+  para(`Average K(fs) used for design: ${isFinite(sum.perm.avg)?Math.round(sum.perm.avg):"—"} mm/d (${sum.perm.n} boreholes).`,{bold:true,after:1});
+  para("Rates marked * were not used in the average (unstable readings).",{italic:true,size:7.5,color:GREY});
+  if(sum.perc.n){H("Percolation tests");grid(["Test #","Depth (cm)","#1","#2","#3","#4","#5","#6","Lowest (min/in)"],s.perc.tests.filter(t=>t.depth!==""||t.t.some(x=>x!=="")).map((t,i)=>[i+1,nv(t.depth)].concat(t.t.map(nv),[isFinite(percCalc(t))?percCalc(t):""])));para(`Percolation rate for system sizing: ${fmt(sum.perc.avg,2)} min/in`,{bold:true})}
+
+  /* Table 2 */
+  title("Table 2 – Setback Distances","portrait");
+  [["From discharge area",SB_DA,"da"],["From subsurface tank, sewer or pipe",SB_TK,"tk"]].forEach(([tt,L,g])=>{H(tt);
+    grid(["Feature","SPM min. (m)","This project (m)","OK?"],L.map(([k,name,spm])=>{const x=sbStatus(s,g,k,spm);return[name,spm,s.setbacks.na[g+"_"+k]?"N/A":nv(s.setbacks[g][k]),x==="ok"?"OK":x==="bad"?"NO":x==="na"?"N/A":""]}),
+      {size:8.5,cols:{0:{halign:"left"}},cell:d=>{if(d.section==="body"&&d.column.index===3){d.cell.styles.fontStyle="bold";if(d.cell.raw==="NO")d.cell.styles.textColor=[176,40,31];if(d.cell.raw==="OK")d.cell.styles.textColor=[43,122,75]}}})});
+  if(s.setbacks.comments)para("Comments: "+s.setbacks.comments,{size:8.5});
+
+  /* Photos: two per page */
+  if(s.photos.length){title("Site Photographs","portrait");const maxW=W()-2*M,maxH=(Hh()-y-30)/2-10;
+    s.photos.forEach((ph,i)=>{const r=(ph.w||4)/(ph.h||3);let w=maxW,h=w/r;if(h>maxH){h=maxH;w=h*r}
+      const capLines=doc.splitTextToSize(photoCaption(ph,i),maxW);if(y+h+capLines.length*4+6>Hh()-18){doc.addPage("letter","portrait");y=M+4}
+      try{doc.addImage(ph.data,"JPEG",M+(maxW-w)/2,y,w,h)}catch(e){}y+=h+4;
+      doc.setFont("helvetica","italic");doc.setFontSize(8.5);doc.setTextColor(...GREY);doc.text(capLines,W()/2,y+1,{align:"center"});y+=capLines.length*4+8})}
+
+  /* Footers */
+  const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(...GREY);
+    doc.text(`${st.company?st.company+"  ·  ":""}${addr}`,M,Hh()-9);doc.text(`Page ${i} of ${n}`,W()-M,Hh()-9,{align:"right"})}
+  doc.setProperties({title:fileBase(s),creator:st.name||"Site & Soil Field Log"});
+  return doc.output("blob")}
+
+/* ============================================================
+   Export – deliver the file (share sheet → email, else save)
+   ============================================================ */
+async function deliverFile(blob,name,status,text,to=""){const file=new File([blob],name,{type:blob.type});let done=false;
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name,text});status.textContent="Sent to your share menu. Pick Mail, check the address and tap Send.";done=true}catch(e){if(e&&e.name==="AbortError"){status.textContent="Share cancelled. Tap the button again when you're ready.";done=true}}}
+  if(!done&&window.claude&&window.claude.use){const dl=await window.claude.use("downloads");if(dl){try{await dl.save({filename:name,data:blob});status.textContent=`Saved “${name}”.${to?" Attach it to an email to "+to+".":""}`;done=true}catch(e){status.textContent="The save was cancelled.";done=true}}}
+  if(!done){const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);status.textContent=`Downloaded “${name}”.${to?" Attach it to an email to "+to+".":""}`}}
+async function doExport(){const s=cur();const btn=$("#dobtn");const status=$("#exstatus");const fmtSel=S.settings.format||"xlsx";
+  btn.disabled=true;status.textContent="Building your file…";
+  try{const blob=fmtSel==="docx"?await buildDocx(s):fmtSel==="pdf"?await buildPdf(s):await buildXlsx(s);const name=fileBase(s)+"."+fmtSel;
+    if(fmtSel){s.sentAt=localStamp(new Date()).slice(0,10);if(!s.status||s.status==="In progress")s.status="Sent";save()}
+    const to=($("#sendto")||{}).value||S.settings.email||"";
+    await deliverFile(blob,name,status,`Site and soil field log for ${s.prop.address||"site"}${to?" – send to "+to:""}`,to);
+  }catch(e){status.textContent=e.message||"Something went wrong building the file. Try again."}
+  btn.disabled=false}
+
+
+function moreExamples(){const rows=[["Example: 1880 Lockyer Road, Roberts Creek","Example: P. Nakamura","2026-10-14",49.4207,-123.6390,"Complete","26-0019"],["Example: 5521 Sunshine Coast Hwy, Sechelt","Example: Halfmoon Bay Holdings","2026-09-30",49.4914,-123.7896,"Sent","26-0024"],["Example: 712 Gower Point Road, Gibsons","Example: L. & D. Osei","2026-08-21",49.3961,-123.5233,"Complete","26-0011"],["Example: 3304 Fort Street, Pender Harbour","Example: M. Fraser","2026-11-03",49.6312,-124.0306,"In progress","26-0031"],["Example: 9058 Redrooffs Road, Halfmoon Bay","Example: Coastline Builders Ltd.","2025-06-12",49.5106,-123.9220,"Complete","25-0042"],["Example: 211 Marine Drive, Granthams Landing","Example: S. Kowalski","2025-04-02",49.4118,-123.4912,"Complete","25-0017"]];
+  return rows.map(([addr,cl,d,la,lo,st,f],i)=>{const s=newSite();s.example=true;s.updated=Date.now()-(i+1)*864e5*7;Object.assign(s.prop,{address:addr,client:cl,date:d,lat:String(la),lon:String(lo),fileNo:f});s.status=st;
+    Object.assign(s.pits[0],{shwt:String(70+i*12),rlDepth:String(100+i*10),wtObserved:"No"});return s})}
+/* ============================================================
+   Boot
+   ============================================================ */
+(async function boot(){const DEF={company:"",name:"",email:"",phone:"",reg:"",logo:"",format:"xlsx",theme:"",photoGps:"Yes"};
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  let meta=await store.get("meta");
+  if(!meta){const old=await store.get("state");
+    if(old&&old.sites){/* move v0.1/0.2 single-record storage to one record per site, photos stored separately */
+      for(const s of old.sites){for(const p of s.photos||[]){if(p.data){await store.set("ph:"+p.id,p.data);try{const th=await resizeDataUrl(p.data,360,0.72);await store.set("th:"+p.id,th)}catch(e){}delete p.data}}await saveSite(s)}
+      if(old.sites.every(s=>s.example))for(const s of moreExamples())await saveSite(s);
+      meta={settings:Object.assign({},DEF,old.settings||{}),ver:2};await store.set("meta",meta);await store.del("state")}
+    else{for(const s of [exampleSite(),...moreExamples()])await saveSite(s);meta={settings:DEF,ver:2};await store.set("meta",meta)}}
+  S.settings=Object.assign({},DEF,meta.settings||{});S.sites=(await store.getPrefix("site:")).filter(x=>x&&x.id);
+  if(!S.sites.length&&!(await store.get("meta"))){/* storage unavailable (private window): keep examples in memory */S.sites=[exampleSite(),...moreExamples()]}
+  applyTheme();render()})();
+function resizeDataUrl(d,max,q){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.onerror=rej;img.src=d})}
+window.__ssfl={get state(){return S},flush,withPhotos,buildXlsx,buildDocx,buildPdf,go,cur:()=>cur()};
+</script>
+
+<script>
+/* Offline support: lets the app open with no signal once it has been opened online. */
+if("serviceWorker" in navigator&&window.isSecureContext){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+</body>
+</html>
