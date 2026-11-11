@@ -405,7 +405,7 @@ function back(){const v=view;if(v.name==="layer"||v.name==="pit")go(v.name==="la
 function render(){if(!termsAccepted()&&view.name!=="termsgate"){view={name:"termsgate"}}stopTimerIfLeaving();if(MAP&&view.name!=="home"){MAP.remove();MAP=null}const r=VIEWS[view.name]||VIEWS.home;$("#app").innerHTML=r();refreshCalcs();if(view.name==="home")renderDir();if(view.name==="photos")fillThumbs()}
 
 const VIEWS={
-home(){setBar("","",false,`<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button>`);
+home(){setBar(S.settings.company||"[Your company name]","",false,`<button class="iconbtn" data-act="settings" aria-label="Settings">${IC.gear}</button>`);
   setActions(`<button class="btn primary" data-act="newsite">${IC.plus} New site investigation</button>`);
   const own=S.sites.filter(x=>!x.example).length;const ex=S.sites.length-own;
   return`<section class="home-hero">${DROP_SVG}${S.settings.logo?`<img class="brandlogo" src="${S.settings.logo}" alt="${esc(S.settings.company||"Company logo")}">`:""}<h2>Site &amp; Soil Field Log</h2><span class="eyebrow">For BC SPM v3 evaluations</span>${S.sites.length<2?`<p>Record test pits, permeability, percolation and setbacks on site. Send the finished log as an Excel, Word or PDF file.</p>`:""}</section>
@@ -629,7 +629,7 @@ settings(){setBar("Settings","Shown on exported reports",true);setActions(`<butt
   <div class="card"><h2>Display</h2><div class="chips" role="group" aria-label="Theme">${[["","Match phone"],["light","Light"],["dark","Dark"]].map(([v,t])=>`<button class="chip" data-act="theme" data-val="${v}" aria-pressed="${(st.theme||"")===v}">${t}</button>`).join("")}</div></div>
   <button class="navitem" style="border:1px solid var(--line);border-radius:var(--r);background:var(--surface)" data-act="showterms"><div class="t"><b>Terms of Use</b><span>${termsAccepted()?"Agreed "+esc(S.settings.terms.at)+" · version "+TERMS_VERSION:"Not yet agreed"}</span></div>${IC.chev}</button>
   ${S.sites.some(x=>x.example)?`<div class="card"><h2>Example sites</h2><p class="hint">${S.sites.filter(x=>x.example).length} example sites show how a finished log looks. Remove them when you no longer need them. Your own sites stay.</p><button class="btn" data-act="delexamples">Remove example sites</button></div>`:""}
-  <p class="foot">Site &amp; Soil Field Log · version 0.7 (2026-11-11)<br>Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>All data stays on this device until you export it.</p>`}
+  <p class="foot">Site &amp; Soil Field Log · version 0.8 (2026-11-11)<br>Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>All data stays on this device until you export it.</p>`}
 };
 
 
