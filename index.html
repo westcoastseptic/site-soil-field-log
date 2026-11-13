@@ -297,7 +297,7 @@ function exampleSite(){const s=newSite();s.example=true;
   s.setbacks.comments="Neighbour's well at 42 m measured from field corner by tape.";
   return s}
 
-let S={sites:[],settings:{company:"",name:"",email:"",phone:"",reg:"",logo:"",format:"xlsx",theme:"",photoGps:"Yes"},ver:1};
+let S={sites:[],settings:{company:"",name:"",email:"",phone:"",reg:"",logo:"",format:"xlsx",theme:"",photoGps:"Yes",includePhotos:"Yes"},ver:1};
 let view={name:"home"}; // {name, siteId, pitId, holeId}
 let saveT=null;
 const dirty=new Set();
@@ -363,7 +363,7 @@ function toast(msg){const t=document.createElement("div");t.className="toast";t.
 
 /* field builders: path is relative to current site, e.g. "prop.client" or "pits.<id>.layers.<id>.to" */
 function getPath(path){const s=cur();return path.split(".").reduce((o,k)=>{if(o==null)return o;if(Array.isArray(o)){const byId=o.find(x=>x&&x.id===k);return byId!==undefined?byId:o[+k]}return o[k]},s)}
-function setPath(path,val){const parts=path.split(".");const last=parts.pop();const parent=getPath(parts.join("."));if(!parent)return;if(Array.isArray(parent))parent[+last]=val;else parent[last]=val;save()}
+function setPath(path,val){if(/^pits\.[^.]+\.name$/.test(path)){const old=getPath(path);if(old&&old!==val)cur().photos.forEach(ph=>{if(ph.pit===old)ph.pit=val})}const parts=path.split(".");const last=parts.pop();const parent=getPath(parts.join("."));if(!parent)return;if(Array.isArray(parent))parent[+last]=val;else parent[last]=val;save()}
 function inp(path,label,opt={}){const v=getPath(path)??"";const id="f_"+path.replace(/\W/g,"_");const t=opt.type||"text";
   const im=opt.num?` inputmode="decimal"`:"";const unit=opt.unit?` <span class="unit">(${esc(opt.unit)})</span>`:"";
   return`<div class="field">${label?`<label for="${id}">${esc(label)}${unit}</label>`:""}<input id="${id}" type="${t==="number"?"text":t}"${im} data-bind="${esc(path)}" value="${esc(v)}"${opt.ph?` placeholder="${esc(opt.ph)}"`:""}${opt.aria?` aria-label="${esc(opt.aria)}"`:""} autocomplete="off"></div>`}
@@ -507,8 +507,11 @@ pit(){const s=cur();const p=pitById(s,view.pitId);if(!p)return VIEWS.pits();cons
     <div class="row">${inp(base+".name","Pit name")}${inp(base+".depth","Total pit depth",{unit:"cm",num:true})}</div>
     ${inp(base+".location","Location",{ph:"e.g. Centre of proposed field"})}
     ${area(base+".notes","Notes")}
-    <button class="btn danger" data-act="delpit">${IC.trash} Delete ${esc(p.name)}</button>
-  </div>`},
+  </div>
+  <div class="card"><h2>Photos</h2>${(()=>{const L=s.photos.filter(ph=>ph.pit===p.name);return L.length?`<div class="photos">${L.map(ph=>`<div class="photo"><img data-thumb="${ph.id}" src="${THUMBS.get(ph.id)||""}" alt="${esc(ph.caption||p.name+" photo")}"><span class="hint mono" style="font-size:12px">${esc(photoGeo(ph)||"No location recorded")}</span>${inp(`photos.${ph.id}.caption`,"",{ph:"Caption",aria:"Photo caption"})}<button class="btn sm danger" data-act="delphoto" data-id="${ph.id}">Remove</button></div>`).join("")}</div>`:`<p class="hint">Photograph the pit wall with a tape for scale, plus the spoil pile. Photos saved here belong to ${esc(p.name)}.</p>`})()}
+    <label class="btn block" style="cursor:pointer">${IC.cam} Add test pit photos<input type="file" accept="image/*" id="pitphotoin" data-pit="${esc(p.name)}" multiple hidden></label>
+  </div>
+  <button class="btn danger" data-act="delpit" style="align-self:flex-start">${IC.trash} Delete ${esc(p.name)}</button>`},
 
 layer(){const s=cur();const p=pitById(s,view.pitId);const l=p&&p.layers.find(x=>x.id===view.layerId);if(!l)return VIEWS.pit();
   const b=`pits.${p.id}.layers.${l.id}`;const idx=p.layers.indexOf(l);
@@ -589,6 +592,8 @@ exp(){const s=cur();setBar("Export & email",s.prop.address,true);setActions(`<bu
   return`<div class="card"><h2>File type</h2>
     <div class="chips" role="group" aria-label="File type"><button class="chip" data-act="fmt" data-val="xlsx" aria-pressed="${f==="xlsx"}">Excel (.xlsx)</button><button class="chip" data-act="fmt" data-val="docx" aria-pressed="${f==="docx"}">Word (.docx)</button><button class="chip" data-act="fmt" data-val="pdf" aria-pressed="${f==="pdf"}">PDF</button></div>
     <p class="hint">${f==="xlsx"?"Excel gives one tab per section (Site & Soil, A1 Test Pits, A2 Permeability, A2 Percolation, T2 Setbacks, Photos) plus a Field Data tab for importing into a design workbook.":f==="pdf"?"PDF gives a finished, read-only report with appendices and photos, ready to send to a client or health authority.":"Word gives a formatted Site and Soil Evaluation report with appendices and photos that you can edit."}</p></div>
+  <div class="card"><h2>Photos</h2><div class="field"><span class="lbl">Include photos with report?</span><div class="chips" role="group" aria-label="Include photos with report?">${["Yes","No"].map(x=>`<button class="chip" data-act="incphotos" data-val="${x}" aria-pressed="${(S.settings.includePhotos||"Yes")===x}">${x}</button>`).join("")}</div></div>
+    <p class="hint">${!s.photos.length?"This site has no photos yet.":(S.settings.includePhotos||"Yes")==="Yes"?`${s.photos.length} photo${s.photos.length===1?"":"s"} will be added at the end, grouped by test pit, then overall site photos.`:"Photos stay on your phone and are left out of the report."}</p></div>
   <div class="card"><h2>Send to</h2>
     <div class="field"><label for="sendto">Email address</label><input id="sendto" type="email" value="${esc(S.settings.email)}" placeholder="you@company.com" data-setting="email"></div>
     <p class="hint">When the file is ready your phone's share menu opens. Choose Mail (or Gmail / Outlook), check the address and tap Send.</p></div>
@@ -629,7 +634,7 @@ settings(){setBar("Settings","Shown on exported reports",true);setActions(`<butt
   <div class="card"><h2>Display</h2><div class="chips" role="group" aria-label="Theme">${[["","Match phone"],["light","Light"],["dark","Dark"]].map(([v,t])=>`<button class="chip" data-act="theme" data-val="${v}" aria-pressed="${(st.theme||"")===v}">${t}</button>`).join("")}</div></div>
   <button class="navitem" style="border:1px solid var(--line);border-radius:var(--r);background:var(--surface)" data-act="showterms"><div class="t"><b>Terms of Use</b><span>${termsAccepted()?"Agreed "+esc(S.settings.terms.at)+" · version "+TERMS_VERSION:"Not yet agreed"}</span></div>${IC.chev}</button>
   ${S.sites.some(x=>x.example)?`<div class="card"><h2>Example sites</h2><p class="hint">${S.sites.filter(x=>x.example).length} example sites show how a finished log looks. Remove them when you no longer need them. Your own sites stay.</p><button class="btn" data-act="delexamples">Remove example sites</button></div>`:""}
-  <p class="foot">Site &amp; Soil Field Log · version 0.8 (2026-11-11)<br>Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>All data stays on this device until you export it.</p>`}
+  <p class="foot">Site &amp; Soil Field Log · version 0.9 (2026-11-13)<br>Field record only. Interpretation and design are the responsibility of the Authorized Person.<br>All data stays on this device until you export it.</p>`}
 };
 
 
@@ -685,6 +690,7 @@ document.addEventListener("change",e=>{const t=e.target;
     if(t.value==="__other"){OTHER.add(path);setPath(path,"");if(oi){oi.value="";oi.hidden=false;oi.focus()}}
     else{OTHER.delete(path);setPath(path,t.value);if(oi){oi.value="";oi.hidden=true}}refreshCalcs()}
   if(t.id==="photoin")addPhotos(t.files);
+  if(t.id==="pitphotoin")addPhotos(t.files,t.dataset.pit);
   if(t.id==="logoin"&&t.files[0])resizeImage(t.files[0],600,0.9,"image/png").then(d=>{S.settings.logo=d;saveMeta();render()})});
 document.addEventListener("click",e=>{const chip=e.target.closest("[data-chip]");
   if(chip){const path=chip.dataset.chip,val=chip.dataset.val;const v=getPath(path);const multi=Array.isArray(v);let focusOther=false;
@@ -731,6 +737,7 @@ document.addEventListener("click",e=>{const chip=e.target.closest("[data-chip]")
    kml:exportKml,
    nearme:mapNearMe,
    delexamples:()=>confirmSheet("Remove the example sites?","Only sites marked Example are removed. Your own sites stay.","Remove examples",()=>{S.sites.filter(x=>x.example).forEach(x=>store.del("site:"+x.id));S.sites=S.sites.filter(x=>!x.example);render();toast("Examples removed")}),
+   incphotos:()=>{S.settings.includePhotos=a.dataset.val;saveMeta();render()},
    photogps:()=>{S.settings.photoGps=a.dataset.val;saveMeta();render()},
    theme:()=>{S.settings.theme=a.dataset.val;applyTheme();saveMeta();render()},
    dellogo:()=>{S.settings.logo="";saveMeta();render()},
@@ -775,11 +782,13 @@ function currentPos(){return new Promise(res=>{if(!navigator.geolocation)return 
   try{navigator.geolocation.getCurrentPosition(p=>fin(p.coords),()=>fin(null),{enableHighAccuracy:true,timeout:14000,maximumAge:60000})}catch(e){fin(null)}})}
 const localStamp=d=>{const z=n=>String(n).padStart(2,"0");return`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`};
 function photoGeo(ph){const parts=[];if(isFinite(ph.lat)&&ph.lat!==null&&ph.lat!=="")parts.push(`${(+ph.lat).toFixed(6)}, ${(+ph.lon).toFixed(6)}${ph.acc?" ±"+ph.acc+" m":""}`);if(ph.time)parts.push(ph.time);return parts.join(" · ")}
+function photoGroups(s){const out=[];let n=0;s.pits.forEach(p=>{const L=s.photos.filter(ph=>ph.pit===p.name);if(L.length)out.push({title:p.name+" photos",items:L.map(ph=>({ph,n:n++}))})});
+  const L=s.photos.filter(ph=>!s.pits.some(p=>p.name===ph.pit));if(L.length)out.push({title:"Site photos",items:L.map(ph=>({ph,n:n++}))});return out}
 function photoCaption(ph,i){const base=`Photo ${i+1}${ph.pit?" ("+ph.pit+")":""}: ${ph.caption||""}`.trim();const g=photoGeo(ph);return S.settings.photoGps!=="No"&&g?`${base}  [${g}]`:base}
-async function addPhotos(files){const s=cur();const list=[...files];if(!list.length)return;toast("Adding photo…");const posP=currentPos();
+async function addPhotos(files,pit=""){const s=cur();const list=[...files];if(!list.length)return;toast("Adding photo…");const posP=currentPos();
   for(const f of list){try{let ex=null;try{ex=parseExif(await f.slice(0,262144).arrayBuffer())}catch(e){}
     const d=await resizeImage(f,1600,0.78);const im=new Image();await new Promise(r=>{im.onload=r;im.src=d});
-    const th=await resizeImage(f,360,0.72);const ph={id:uid(),w:im.width,h:im.height,caption:"",pit:"",lat:"",lon:"",acc:"",time:(ex&&ex.time)||localStamp(new Date()),gpsSrc:""};
+    const th=await resizeImage(f,360,0.72);const ph={id:uid(),w:im.width,h:im.height,caption:"",pit,lat:"",lon:"",acc:"",time:(ex&&ex.time)||localStamp(new Date()),gpsSrc:""};
     if(ex&&isFinite(ex.lat)){ph.lat=+ex.lat.toFixed(6);ph.lon=+ex.lon.toFixed(6);ph.gpsSrc="photo"}
     else{const c=await posP;if(c){ph.lat=+c.latitude.toFixed(6);ph.lon=+c.longitude.toFixed(6);ph.acc=Math.round(c.accuracy);ph.gpsSrc="phone"}}
     await store.set("ph:"+ph.id,d);await store.set("th:"+ph.id,th);THUMBS.set(ph.id,th);s.photos.push(ph)}catch(e){toast("That file couldn't be read as a photo")}}
@@ -958,9 +967,10 @@ async function buildXlsx(s){s=await withPhotos(s);const X=window.ExcelJS;if(!X)t
 
   /* Photos */
   if(s.photos.length){ws=sheet("Photos",[45,4,45]);r=header(ws,"Site Photographs",3);
-    for(let i=0;i<s.photos.length;i+=2){[0,1].forEach(k=>{const ph=s.photos[i+k];if(!ph)return;const id=wb.addImage({base64:ph.data,extension:"jpeg"});const W=300,Hh=Math.round(W*(ph.h||3)/(ph.w||4));
-        ws.addImage(id,{tl:{col:k*2,row:r-1},ext:{width:W,height:Hh}});const cap=ws.getCell(r+Math.ceil(Hh/20),1+k*2);cap.value=photoCaption(ph,i+k);cap.font={size:9,italic:true};cap.alignment={wrapText:true}});
-      const p0=s.photos[i],p1=s.photos[i+1];const hmax=Math.max(...[p0,p1].filter(Boolean).map(ph=>Math.round(300*(ph.h||3)/(ph.w||4))));r+=Math.ceil(hmax/20)+3}}
+    photoGroups(s).forEach(g=>{ws.mergeCells(r,1,r,3);const hc=ws.getCell(r,1);hc.value=g.title.toUpperCase();hc.font={bold:true,size:11,color:{argb:"FF508EB9"}};hc.border={bottom:{style:"medium",color:{argb:"FF508EB9"}}};ws.getRow(r).height=20;r+=2;
+    for(let i=0;i<g.items.length;i+=2){[0,1].forEach(k=>{const it=g.items[i+k];if(!it)return;const ph=it.ph;const id=wb.addImage({base64:ph.data,extension:"jpeg"});const W=300,Hh=Math.round(W*(ph.h||3)/(ph.w||4));
+        ws.addImage(id,{tl:{col:k*2,row:r-1},ext:{width:W,height:Hh}});const cap=ws.getCell(r+Math.ceil(Hh/20),1+k*2);cap.value=photoCaption(ph,it.n);cap.font={size:9,italic:true};cap.alignment={wrapText:true}});
+      const hmax=Math.max(...g.items.slice(i,i+2).map(it=>Math.round(300*(it.ph.h||3)/(it.ph.w||4))));r+=Math.ceil(hmax/20)+3}})}
 
   /* Field data */
   ws=wb.addWorksheet("Field Data");ws.columns=[{header:"Key",width:22},{header:"Value",width:50},{header:"Description",width:44}];ws.getRow(1).font={bold:true};
@@ -1015,7 +1025,7 @@ async function buildDocx(s){s=await withPhotos(s);const D=window.docx;if(!D)thro
   [["From discharge area",SB_DA,"da"],["From subsurface tank, sewer or pipe",SB_TK,"tk"]].forEach(([title,L,g])=>{app.push(H(title),grid(["Feature","SPM min. (m)","This project (m)","OK?"],L.map(([k,name,spm])=>{const stt=sbStatus(s,g,k,spm);return[name,spm,s.setbacks.na[g+"_"+k]?"N/A":nv(s.setbacks[g][k]),stt==="ok"?"OK":stt==="bad"?"NO":stt==="na"?"N/A":""]}),{size:18,bold:(ri,ci)=>ci===3}))});
   if(s.setbacks.comments)app.push(P("Comments: "+s.setbacks.comments,{size:18}));
   const photos=[];if(s.photos.length){photos.push(new Paragraph({children:[T("Site Photographs",{bold:true,size:32,color:GREEN})],spacing:{after:120}}));
-    s.photos.forEach((ph,i)=>{const W=420,Hh=Math.round(W*(ph.h||3)/(ph.w||4));photos.push(new Paragraph({children:[new ImageRun({data:dataUrlToBytes(ph.data),transformation:{width:W,height:Math.min(Hh,560)}})],alignment:AlignmentType.CENTER,spacing:{before:120}}),P(photoCaption(ph,i),{italics:true,size:18,align:AlignmentType.CENTER}))})}
+    photoGroups(s).forEach(g=>{photos.push(H(g.title));g.items.forEach(({ph,n:i})=>{const W=420,Hh=Math.round(W*(ph.h||3)/(ph.w||4));photos.push(new Paragraph({children:[new ImageRun({data:dataUrlToBytes(ph.data),transformation:{width:W,height:Math.min(Hh,560)}})],alignment:AlignmentType.CENTER,spacing:{before:120}}),P(photoCaption(ph,i),{italics:true,size:18,align:AlignmentType.CENTER}))})})}
   const footer=new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[T(`${st.company?st.company+"  ·  ":""}${addr}  ·  Page `,{size:16,color:"5A6B77"}),new TextRun({children:[PageNumber.CURRENT],size:16,color:"5A6B77",font:"Calibri"})]})]});
   const margin={top:1000,bottom:1000,left:1000,right:1000};
   const doc=new Document({creator:st.name||"Site & Soil Field Log",title:fileBase(s),styles:{default:{document:{run:{font:"Calibri",size:20}}}},sections:[
@@ -1091,10 +1101,11 @@ async function buildPdf(s){s=await withPhotos(s);const J=window.jspdf;if(!J||!J.
 
   /* Photos: two per page */
   if(s.photos.length){title("Site Photographs","portrait");const maxW=W()-2*M,maxH=(Hh()-y-30)/2-10;
-    s.photos.forEach((ph,i)=>{const r=(ph.w||4)/(ph.h||3);let w=maxW,h=w/r;if(h>maxH){h=maxH;w=h*r}
-      const capLines=doc.splitTextToSize(photoCaption(ph,i),maxW);if(y+h+capLines.length*4+6>Hh()-18){doc.addPage("letter","portrait");y=M+4}
+    photoGroups(s).forEach(g=>{let first=true;g.items.forEach(({ph,n:i})=>{const r=(ph.w||4)/(ph.h||3);let w=maxW,h=w/r;if(h>maxH){h=maxH;w=h*r}
+      const capLines=doc.splitTextToSize(photoCaption(ph,i),maxW);const extra=first?9:0;if(y+extra+h+capLines.length*4+6>Hh()-18){doc.addPage("letter","portrait");y=M+4}
+      if(first){H(g.title);first=false}
       try{doc.addImage(ph.data,"JPEG",M+(maxW-w)/2,y,w,h)}catch(e){}y+=h+4;
-      doc.setFont("helvetica","italic");doc.setFontSize(8.5);doc.setTextColor(...GREY);doc.text(capLines,W()/2,y+1,{align:"center"});y+=capLines.length*4+8})}
+      doc.setFont("helvetica","italic");doc.setFontSize(8.5);doc.setTextColor(...GREY);doc.text(capLines,W()/2,y+1,{align:"center"});y+=capLines.length*4+8})})}
 
   /* Footers */
   const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(...GREY);
@@ -1111,7 +1122,7 @@ async function deliverFile(blob,name,status,text,to=""){const file=new File([blo
   if(!done){const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);status.textContent=`Downloaded “${name}”.${to?" Attach it to an email to "+to+".":""}`}}
 async function doExport(){const s=cur();const btn=$("#dobtn");const status=$("#exstatus");const fmtSel=S.settings.format||"xlsx";
   btn.disabled=true;status.textContent="Building your file…";
-  try{const blob=fmtSel==="docx"?await buildDocx(s):fmtSel==="pdf"?await buildPdf(s):await buildXlsx(s);const name=fileBase(s)+"."+fmtSel;
+  try{const s2=S.settings.includePhotos==="No"?{...s,photos:[]}:s;const blob=fmtSel==="docx"?await buildDocx(s2):fmtSel==="pdf"?await buildPdf(s2):await buildXlsx(s2);const name=fileBase(s)+"."+fmtSel;
     if(fmtSel){s.sentAt=localStamp(new Date()).slice(0,10);if(!s.status||s.status==="In progress")s.status="Sent";save()}
     const to=($("#sendto")||{}).value||S.settings.email||"";
     await deliverFile(blob,name,status,`Site and soil field log for ${s.prop.address||"site"}${to?" – send to "+to:""}`,to);
@@ -1125,7 +1136,7 @@ function moreExamples(){const rows=[["Example: 1880 Lockyer Road, Roberts Creek"
 /* ============================================================
    Boot
    ============================================================ */
-(async function boot(){const DEF={company:"",name:"",email:"",phone:"",reg:"",logo:"",format:"xlsx",theme:"",photoGps:"Yes"};
+(async function boot(){const DEF={company:"",name:"",email:"",phone:"",reg:"",logo:"",format:"xlsx",theme:"",photoGps:"Yes",includePhotos:"Yes"};
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
   let meta=await store.get("meta");
   if(!meta){const old=await store.get("state");
