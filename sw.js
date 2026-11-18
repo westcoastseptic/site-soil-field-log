@@ -1,7 +1,7 @@
-/* Site & Soil Field Log service worker. Version 05ec5a9f (2026-11-13).
+/* Site & Soil Field Log service worker. Version 5b68ff08 (2026-11-18).
    The app page loads fresh when online (so updates arrive) and from the cache when offline.
-   Libraries and fonts are cached the first time they load. Map tiles are not cached. */
-const CACHE="ssfl-05ec5a9f";
+   Libraries and fonts are cached the first time they load. Map tiles and sign-in calls are never cached. */
+const CACHE="ssfl-5b68ff08";
 const SHELL=["./","index.html","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/apple-touch-icon.png"];
 const LIBS=[
 "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js",
@@ -16,5 +16,5 @@ self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.
 self.addEventListener("activate",e=>{e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim()})())});
 self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET")return;const u=new URL(r.url);
   if(r.mode==="navigate"){e.respondWith(fetch(r).then(res=>{const cp=res.clone();caches.open(CACHE).then(c=>c.put("index.html",cp));return res}).catch(()=>caches.match("index.html")));return}
-  if(u.hostname.endsWith("tile.openstreetmap.org"))return;
+  if(u.hostname.endsWith("tile.openstreetmap.org")||u.hostname.endsWith(".supabase.co"))return;
   e.respondWith(caches.match(r).then(hit=>hit||fetch(r).then(res=>{if(res.ok||res.type==="opaque"){const cp=res.clone();caches.open(CACHE).then(c=>c.put(r,cp))}return res})))});
