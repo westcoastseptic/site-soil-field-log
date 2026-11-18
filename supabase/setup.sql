@@ -47,4 +47,4 @@ grant execute on function public.delete_my_account() to authenticated;
 -- Accounts with sign-up date:   select email, created_at, last_sign_in_at from auth.users order by created_at desc;
 -- Who accepted which terms:     select email, terms_version, accepted_at, app_version from public.terms_acceptances order by accepted_at desc;
 -- Accounts that haven't accepted the current terms:
---   select u.email from auth.users u where not exists (select 1 from public.terms_acceptances a where a.user_id = u.id and a.terms_version = '1.1-draft');
+--   select u.email from auth.users u where not exists (select 1 from public.terms_acceptances a where a.user_id = u.id and a.terms_version = '1.1');
