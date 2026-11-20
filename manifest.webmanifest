@@ -1,7 +1,7 @@
 {
   "name": "Site & Soil Field Log",
   "short_name": "Site & Soil",
-  "description": "Record a site and soil evaluation in the field and export it to Excel, Word or PDF.",
+  "description": "A free field tool from West Coast Septic: record a site and soil evaluation and export it to Excel, Word or PDF.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
