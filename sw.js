@@ -1,7 +1,7 @@
-/* Site & Soil Field Log service worker. Version b48f0ac4 (2026-11-25).
+/* Site & Soil Field Log service worker. Version be75ec7e (2026-11-25).
    The app page loads fresh when online (so updates arrive) and from the cache when offline.
    Libraries and fonts are cached the first time they load. Map tiles and sign-in calls are never cached. */
-const CACHE="ssfl-b48f0ac4";
+const CACHE="ssfl-be75ec7e";
 const SHELL=["./","index.html","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/apple-touch-icon.png"];
 const LIBS=[
 "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js",
